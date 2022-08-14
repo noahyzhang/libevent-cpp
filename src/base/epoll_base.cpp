@@ -1,4 +1,5 @@
 #include <sys/resource.h>
+#include <string.h>
 #include "epoll_base.h"
 #include "util/log/logger.h"
 
@@ -15,6 +16,7 @@ bool libevent_cpp::epoll_base::init() {
         max_events_ = rl.rlim_cur;
     }
     epoll_event_list_ = new struct epoll_event[max_events_]; 
+    return true; 
 }
 
 libevent_cpp::epoll_base::~epoll_base() {
@@ -39,10 +41,12 @@ bool libevent_cpp::epoll_base::add(std::shared_ptr<io_event> event) {
     if (event->is_event_type_writeable()) {
         epev.events |= EPOLLOUT;
     }
+    logger::debug("epoll_fd_: %d, op: %d, fd: %d, epoll_events: %d", epoll_fd_, op, event->fd_, epev.events); 
     if (epoll_ctl(epoll_fd_, op, event->fd_, &epev) < 0) {
-        logger::error("epoll_ctl of epoll_base add failed");
+        logger::error("epoll_ctl of epoll_base add failed, err: %s", strerror(errno));
         return false;
     }
+    logger::debug("epoll_base::add success");
     return true; 
 }
 
@@ -58,6 +62,7 @@ bool libevent_cpp::epoll_base::remove(std::shared_ptr<io_event> event) {
 }
 
 bool libevent_cpp::epoll_base::dispatch(struct timeval* tv) {
+    logger::debug("epoll_base::dispatch start");
     int timeout = -1;
     if (tv) {
         // 将 tv 转换成毫秒，小于 1 毫秒的部分算作 1 毫秒

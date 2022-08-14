@@ -11,3 +11,5 @@ aux_source_directory(src/base BASE_SRC)
 aux_source_directory(src/event EVENT_SRC)
 
 add_executable(libevent_cpp ${BASE_SRC} ${EVENT_SRC})
+
+add_subdirectory(test)

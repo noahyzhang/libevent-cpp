@@ -8,11 +8,15 @@ namespace libevent_cpp {
 
 class select_base : public event_base {
 private:  
-    fd_set* event_read_set_in = nullptr;
-    fd_set* event_write_set_in = nullptr;
-    
-    fd_set* event_read_set_out = nullptr;
-    fd_set* event_write_set_out = nullptr;
+    // 用户修改的 fds 和传入内核的 fds 分开，为了线程安全 
+    // 用于用户修改监听的 fd。
+    fd_set* event_read_fds_in_ = nullptr; 
+    fd_set* event_write_fds_in_ = nullptr; 
+    // 用于 select dispatch 调用，由内核填充内部
+    fd_set* event_read_fds_out_ = nullptr; 
+    fd_set* event_write_fds_out_ = nullptr; 
+
+    int max_fd_; // 最大的文件描述符 
 public:  
     select_base() = default;
     ~select_base();

@@ -22,6 +22,7 @@ bool libevent_cpp::poll_base::add(std::shared_ptr<io_event> ev) {
 bool libevent_cpp::poll_base::remove(std::shared_ptr<io_event> ev) {
     delete fd_map_poll_[ev->fd_];
     fd_map_poll_.erase(ev->fd_);
+    return true; 
 }
 
 bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {

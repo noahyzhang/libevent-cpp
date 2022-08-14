@@ -2,7 +2,6 @@
 #define LIBEVENT_CPP_IO_EVENT_H
 
 #include <unistd.h> 
-
 #include "event.h"
 
 namespace libevent_cpp {
@@ -14,7 +13,7 @@ enum EVENT_TYPE {
     RDWR,
 };
 
-class io_event : public event {
+class io_event : public event { 
 private:  
     bool event_type_read_ = false;  // 事件类型：读事件
     bool event_type_write_ = false;  // 事件类型：写事件 

@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sun Aug  7 14:16:12 2022
+# Make data base, printed on Sun Aug 14 11:56:12 2022
 
 # Variables
 
@@ -23,7 +23,7 @@ VSCODE_CWD = /root
 # environment
 JMETER = /usr/local/apache-jmeter-5.4.3
 # environment
-TST_HACK_BASH_SESSION_ID = 137698311357975
+TST_HACK_BASH_SESSION_ID = 119582139895231
 # default
 MAKE_COMMAND := make
 # environment
@@ -65,7 +65,7 @@ VSCODE_PIPE_LOGGING = true
 # environment
 SPARK_HOME = /usr/local/spark
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # environment
 LESSOPEN = ||/usr/bin/lesspipe.sh %s
 # automatic
@@ -117,7 +117,7 @@ MAKEFILES :=
 # automatic
 ^F = $(notdir $^)
 # environment
-SSH_CLIENT = 10.21.19.11 49852 36000
+SSH_CLIENT = 10.99.17.135 32027 36000
 # environment
 VSCODE_LOG_NATIVE = false
 # automatic
@@ -157,7 +157,7 @@ _ = /usr/bin/make
 # environment
 M2_HOME = /usr/local/apache-maven-3.8.2
 # environment
-VSCODE_IPC_HOOK_CLI = /tmp/vscode-ipc-ab4a18b3-a5ef-4c13-944b-28436f13c3c9.sock
+VSCODE_IPC_HOOK_CLI = /tmp/vscode-ipc-68006329-82d4-4700-bbd8-12e94d90eb51.sock
 # environment
 VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 # environment
@@ -173,7 +173,7 @@ SUFFIXES :=
 # environment
 TAW_WEB_ES_AUTH_USER = elastic
 # environment
-SSH_CONNECTION = 10.21.19.11 49852 9.134.239.95 36000
+SSH_CONNECTION = 10.99.17.135 32027 9.134.239.95 36000
 # variable set hash-table stats:
 # Load=81/1024=8%, Rehash=0, Collisions=5/108=5%
 
@@ -183,9 +183,9 @@ SSH_CONNECTION = 10.21.19.11 49852 9.134.239.95 36000
 
 # Directories
 
-# . (device 64529, inode 3541647): 6 files, no impossibilities.
+# . (device 64529, inode 3541647): 9 files, no impossibilities.
 
-# 6 files, no impossibilities in 1 directories.
+# 9 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -208,7 +208,6 @@ Makefile:
 
 # Not a target:
 all:
- 
 #  Command line target.
 #  Implicit rule search has been done.
 #  File does not exist.
@@ -236,12 +235,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 15 / storage = 146 B / avg = 9 B
-# current buf: size = 8162 B / used = 146 B / count = 15 / avg = 9 B
+# strcache buffers: 1 (0) / strings = 18 / storage = 162 B / avg = 9 B
+# current buf: size = 8162 B / used = 162 B / count = 18 / avg = 9 B
 
-# strcache performance: lookups = 17 / hit rate = 11%
+# strcache performance: lookups = 20 / hit rate = 10%
 # hash-table stats:
-# Load=15/8192=0%, Rehash=0, Collisions=0/17=0%
-# Finished Make data base on Sun Aug  7 14:16:12 2022
+# Load=18/8192=0%, Rehash=0, Collisions=0/20=0%
+# Finished Make data base on Sun Aug 14 11:56:12 2022
 
  
