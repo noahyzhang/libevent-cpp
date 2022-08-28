@@ -13,6 +13,7 @@ typedef enum {
 } LIBEVENT_CPP_LOG_LEVEL;
 
 #define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b))) 
+// TODO 在 c++ 中使用 core 掉的原因 
 #define EV_NORETURN __attribute__((noreturn)) 
 
 class logger {
