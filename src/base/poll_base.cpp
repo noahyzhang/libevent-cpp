@@ -57,10 +57,10 @@ bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
                 what |= POLLIN | POLLOUT;
             }
             if ((what & POLLIN) && io_ev->is_event_type_readable()) {
-                io_ev->set_read_event_active_status();
+                io_ev->enable_read_event_status_active();
             }
             if ((what & POLLOUT) && io_ev->is_event_type_writeable()) {
-                io_ev->set_write_event_active_status();
+                io_ev->enable_write_event_status_active();
             }
             if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
                 push_event_active_queue(io_ev); 

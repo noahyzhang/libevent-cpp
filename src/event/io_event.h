@@ -22,6 +22,7 @@ private:
 public:  
     int fd_ = -1; // 文件描述符
     bool is_event_first_add_ = true; // 事件如果第一次添加，则为 add；后续为 mod 
+    int err = -1; 
 
 public:  
     io_event() = delete;
@@ -31,6 +32,8 @@ public:
             close(fd_);
         }
     }
+
+    inline void set_fd(size_t fd) { fd_ = fd; }
 
     inline void set_event_type(EVENT_TYPE type) {
         switch (type)
@@ -51,9 +54,13 @@ public:
     // 清除事件的活跃状态 
     inline void clear_event_active_status() { read_event_status_active_ = write_event_status_active_ = false; }
     // 设置事件的活跃状态为可读
-    inline void set_read_event_active_status() { read_event_status_active_ = true; }
+    inline void enable_read_event_status_active() { read_event_status_active_ = true; }
     // 设置事件的活跃状态为可写
-    inline void set_write_event_active_status() { write_event_status_active_ = true; }
+    inline void enable_write_event_status_active() { write_event_status_active_ = true; }
+    // 清除可读时间的活跃状态
+    inline void disable_read_event_status_active() { read_event_status_active_ = false; } 
+    // 清除可写事件的活跃状态
+    inline void disable_write_event_status_active() { write_event_status_active_ = false; }
     // 此事件的读活跃状态
     inline bool is_read_event_active_status() const { return read_event_status_active_; }
     // 此事件的写活跃状态 

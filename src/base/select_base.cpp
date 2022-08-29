@@ -83,10 +83,10 @@ bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
             // 清除当前 event 的活跃状态，然后设置新的活跃状态
             ev->clear_event_active_status();
             if (readable && ev->is_event_type_readable()) {
-                ev->set_read_event_active_status();
+                ev->enable_read_event_status_active();
             }
             if (writeable && ev->is_event_type_writeable()) {
-                ev->set_write_event_active_status();
+                ev->enable_write_event_status_active();
             }
             // 如果此事件可读、可写，将它插入到活跃队列中
             if (ev->is_event_type_readable() || ev->is_event_type_writeable()) {

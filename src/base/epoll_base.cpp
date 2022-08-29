@@ -90,11 +90,11 @@ bool libevent_cpp::epoll_base::dispatch(struct timeval* tv) {
             if ((what & EPOLLIN) && io_ev->is_event_type_readable()) {
                 // 可读事件来临，并且此事件为可读的。则设置可读为活跃状态 
                 if ((what & EPOLLIN) && io_ev->is_event_type_readable()) {
-                    io_ev->set_read_event_active_status();
+                    io_ev->enable_read_event_status_active();
                 }
                 // 可写事件来临，并且此事件为可写的。则设置可写为活跃状态
                 if ((what & EPOLLOUT) && io_ev->is_event_type_writeable()) {
-                    io_ev->set_write_event_active_status();
+                    io_ev->enable_write_event_status_active();
                 }
                 if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
                     // 将此事件添加到活跃队列中
