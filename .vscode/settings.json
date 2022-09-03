@@ -55,5 +55,10 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "future": "cpp"
+    },
+    "C_Cpp.clang_format_fallbackStyle": "Google",
+    "[cpp]": {
+        "editor.detectIndentation": true,
+        "editor.tabSize": 4
     }
 }

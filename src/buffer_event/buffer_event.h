@@ -1,9 +1,9 @@
 #ifndef LIBEVENT_CPP_BUFFER_EVENT_H
 #define LIBEVENt_CPP_BUFFER_EVENT_H
 
-#include "buffer.h"
-#include "event_base.h"
-#include "logger.h"
+#include "util/util_buffer.h"
+#include "base/event_base.h"
+#include "util/util_logger.h"
 
 namespace libevent_cpp {
 
@@ -58,11 +58,14 @@ public:
     void remove_read_event();
     void remove_write_event();
 
-    inline int write_output_buffer() {
+    inline int write_output_buffer() const {
         return output_->write_file(ev_->fd_);
     }
-    inline int read_input_buffer() {
+    inline int read_input_buffer() const {
         return input_->read_file(ev_->fd_, -1); 
+    }
+    inline int get_fd() const {
+        return ev_->fd_;
     }
 
 private:
