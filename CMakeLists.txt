@@ -3,8 +3,7 @@ project(libevent_cpp)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(src/base/)
-include_directories(src/event/)
+include_directories(src/)
 
 
 aux_source_directory(src/base BASE_SRC)

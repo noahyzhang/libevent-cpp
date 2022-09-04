@@ -49,7 +49,7 @@ private:
     detail::Queue<std::function<void(int id)>*> queue_; 
     std::atomic<bool> is_done_;
     std::atomic<bool> is_stop_;
-    std::atomic<int> waiting_threads_; // 处于等待中的线程数量 
+    std::atomic<size_t> waiting_threads_; // 处于等待中的线程数量 
     std::mutex mutex_;
     std::condition_variable cv_; 
 
@@ -82,7 +82,12 @@ public:
         cv_.notify_one();
         return pck->get_future(); 
     }
-    int get_thread_num() { return threads_.size(); }
+
+    inline size_t get_thread_num() const { return threads_.size(); }
+    inline size_t get_idle_thread_num() const {
+        return waiting_threads_;
+    }
+
     void reset_thread_num(int thread_num);
     void clear_queue();
     std::function<void(int)> pop();

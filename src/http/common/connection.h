@@ -33,6 +33,16 @@ public:
     virtual void do_read_done() = 0;
     virtual void do_write_done() = 0;
 
+    void reset();
+    void close(int op);
+
+    void start_read();
+    void start_write();
+    void add_read_and_timer();
+    void add_write_and_timer();
+    void remove_read_and_timer();
+    void remove_write_and_timer();
+
     inline int is_connected() const {
         switch (state_) {
         case DISCONNECTED:
@@ -56,6 +66,13 @@ public:
 protected:
     inline http_request* current_request();
     inline void pop_request(); 
+    inline std::unique_ptr<http_request> get_empty_request();
+    void read_http();
+    void read_firstline();
+    void read_header();
+    void get_body();
+    void read_body();
+    void read_trailer(); 
 
 protected:
     int timeout_ = -1; 
@@ -64,6 +81,12 @@ protected:
     std::queue<std::unique_ptr<http_request>> empty_queue_; 
     std::shared_ptr<time_event> read_timer_ = nullptr;
     std::shared_ptr<time_event> write_timer_ = nullptr;
+
+private:
+    static void handler_read(http_connection* conn);
+    static void handler_eof(http_connection* conn);
+    static void handler_write(http_connection* conn);
+    static void handler_error(http_connection* conn);
 };
 
 } // namespace libevent_cpp 

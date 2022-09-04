@@ -7,7 +7,6 @@
 
 namespace libevent_cpp {
 
-// 当类被share_ptr管理，且在类的成员函数里需要把当前类对象作为参数传给其他函数时，就需要传递一个指向自身的share_ptr
 class http_client {
 
 public:
@@ -21,7 +20,8 @@ public:
     inline void set_timeout(int sec) {
         timeout_ = sec;
     }
-    std::unique_ptr<http_client_connection> make_connection(const std::string& server_address, unsigned int server_port);
+    std::unique_ptr<http_client_connection> make_connection(
+        const std::string& server_address, unsigned int server_port);
     void run(); 
 
 }; 

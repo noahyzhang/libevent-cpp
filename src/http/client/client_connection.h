@@ -19,9 +19,10 @@ public:
 
     int make_request(std::unique_ptr<http_request> req);
     int connect();
+    
+    void do_read_done() override;
+    void do_write_done() override;
     void fail(http_connection_error err);
-    void do_read_done();
-    void do_write_done();
 
     inline void set_server_addr(const std::string& server_addr) {
         server_addr_ = server_addr;

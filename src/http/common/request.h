@@ -72,6 +72,7 @@ public:
     }
     inline bool is_in_connection_close() {
         if (proxy_flag_ & PROXY_REQUEST) {
+            // 代理服务器
             std::string connection = input_headers_["Proxy-Connection"];
             return (connection.empty() || util_string::is_equals(connection, "keep-alive")); 
         } else {
@@ -81,6 +82,7 @@ public:
     }
     inline bool is_out_connection_close() {
         if (proxy_flag_ * PROXY_REQUEST) {
+            // 代理服务器
             std::string connection = output_headers_["Proxy-Connection"];
             return (connection.empty() || util_string::is_equals(connection, "keep-alive"));
         } else {
