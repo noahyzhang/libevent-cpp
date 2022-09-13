@@ -32,6 +32,7 @@ public:
     virtual ~http_connection(); 
     virtual void do_read_done() = 0;
     virtual void do_write_done() = 0;
+    virtual void fail(http_connection_error err) = 0;
 
     void reset();
     void close(int op);
@@ -77,8 +78,8 @@ protected:
 protected:
     int timeout_ = -1; 
     enum http_connection_state state_; 
-    std::queue<std::unique_ptr<http_request>> requests_;
-    std::queue<std::unique_ptr<http_request>> empty_queue_; 
+    std::queue< std::unique_ptr<http_request> > requests_;
+    std::queue< std::unique_ptr<http_request> > empty_queue_; 
     std::shared_ptr<time_event> read_timer_ = nullptr;
     std::shared_ptr<time_event> write_timer_ = nullptr;
 

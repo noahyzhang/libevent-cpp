@@ -22,8 +22,9 @@ public:
     
     void do_read_done() override;
     void do_write_done() override;
-    void fail(http_connection_error err);
+    void fail(http_connection_error err) override;
 
+public:
     inline void set_server_addr(const std::string& server_addr) {
         server_addr_ = server_addr;
     }

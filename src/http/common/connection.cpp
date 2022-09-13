@@ -148,13 +148,13 @@ void libevent_cpp::http_connection::handler_read(http_connection* conn) {
     conn->read_http();
 }
 
-static void libevent_cpp::http_connection::handler_eof(http_connection* conn) {
+void libevent_cpp::http_connection::handler_eof(http_connection* conn) {
     if (conn->get_output_buf_length() > 0) {
         conn->start_write();
     }
 }
 
-static void libevent_cpp::http_connection::handler_write(http_connection* conn) {
+void libevent_cpp::http_connection::handler_write(http_connection* conn) {
     conn->remove_write_and_timer();
     if (conn->get_output_buf_length() > 0) {
         conn->add_write_and_timer();
@@ -164,7 +164,7 @@ static void libevent_cpp::http_connection::handler_write(http_connection* conn) 
     }
 }
 
-static void libevent_cpp::http_connection::handler_error(http_connection* conn) {
+void libevent_cpp::http_connection::handler_error(http_connection* conn) {
     if (errno == EPIPE || errno == ECONNRESET) {
         conn->
     }

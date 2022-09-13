@@ -5,6 +5,7 @@
 #include <map>
 #include "thread/thread_pool.h"
 #include "base/event_base.h"
+#include "common/request.h"
 
 namespace libevent_cpp {
 

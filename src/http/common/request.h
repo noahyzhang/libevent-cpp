@@ -63,8 +63,14 @@ public:
     inline void set_cb(void (*cb)(http_request*)) {
         cb_ = cb;
     }
-    inline auto get_cb() const {
-        return cb_; 
+    inline std::function<void(http_request*)> get_cb() const {
+        return cb_;
+    }
+    inline void set_uri(const std::string& uri) {
+        uri_ = uri;
+    }
+    inline std::string get_uri() const {
+        return uri_; 
     }
     inline bool is_connection_keepalive() {
         std::string connection = input_headers_["Connection"];
