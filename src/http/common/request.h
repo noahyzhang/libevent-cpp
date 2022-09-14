@@ -18,6 +18,7 @@ enum http_request_kind {
 
 // 返回码
 #define HTTP_OK 200 
+#define HTTP_BADREQUEST 400
 #define HTTP_NOT_FOUND 404 
 
 // 一些标志
@@ -101,6 +102,12 @@ public:
                 is_in_connection_close() || 
                 is_out_connection_close(); 
     }
+    inline bool is_handled() const {
+        return is_handled_;
+    }
+    inline void set_handled() {
+        is_handled_ = true;
+    }
 
 private: 
     void make_header();
@@ -114,6 +121,7 @@ private:
     std::string remote_host_;
     unsigned short remote_port_; 
     int proxy_flag_; 
+    bool is_handled_{false};
 
     std::unique_ptr<buffer> input_buffer_;
     std::unique_ptr<buffer> output_buffer_;

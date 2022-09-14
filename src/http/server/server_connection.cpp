@@ -30,11 +30,29 @@ int libevent_cpp::http_server_connection::create_request() {
     req->set_remote_port(client_port_);
     requests_.push(std::move(req));
     start_read();
-    return true;
+    return 0;
 }
 
 void libevent_cpp::http_server_connection::handle_request(http_request* req) {
-
+    if (req->get_uri().empty()) {
+        req->send_error(HTTP_BADREQUEST, "Bad Request");
+        logger::error("request uri is empty, handle Bad Requst");
+        return;
+    }
+    logger::info("handle uri: %s", req->get_uri().c_str());
+    req->set_uri(util_string::string_from_utf8(req->get_uri()));
+    size_t offset = req->get_uri().find('?');
+    if (offset != std::string::npos) {
+        // TODO req->query 
+    }
+    // 如果已经存在，则更新
+    if (server_->handle_callbacks.count(req->get_uri()) > 0) {
+        server_->handle_callbacks.at(req->get_uri())(req);
+        return;
+    }
+    // TODO 
+    for (const auto& kv : server_->handle_callbacks) {
+    }
 }
 
 void libevent_cpp::http_server_connection::fail(http_connection_error err) {
@@ -61,5 +79,36 @@ void libevent_cpp::http_server_connection::fail(http_connection_error err) {
         }
         handle_request(req);
         return;
+    }
+}
+
+void libevent_cpp::http_server_connection::do_read_done() {
+    auto req = current_request();
+    if (!req) {
+        return;
+    }
+    if (req->is_handled()) {
+        fail(HTTP_EOF);
+        return;
+    }
+    start_write();
+    handle_request(req);
+    req->set_handled();
+}
+
+void libevent_cpp::http_server_connection::do_write_done() {
+    auto req = current_request();
+    if (!req) {
+        return;
+    }
+    // TODO chunk
+    bool need_close = req->is_connection_close();
+    pop_request();
+    if (need_close) {
+        close(0);
+        return;
+    }
+    if (create_request() < 0) {
+        close(1);
     }
 }

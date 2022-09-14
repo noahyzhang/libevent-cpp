@@ -53,6 +53,13 @@ bool libevent_cpp::event_base::remove_event(const std::shared_ptr<event>& ev) {
     }
 }
 
+void libevent_cpp::event_base::clean_io_event(const std::shared_ptr<io_event>& ev) {
+    ev->disable_read_event_status_active();
+    ev->disable_write_event_status_active();
+    remove_event(ev);
+    // TODO 
+}
+
 void libevent_cpp::event_base::push_event_active_queue(std::shared_ptr<event> ev) {
     active_event_queues_[ev->priority_].push(ev);
     ev->set_active_status();

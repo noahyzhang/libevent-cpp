@@ -1,3 +1,4 @@
+#include <sstream>
 #include "util_string.h"
 
 bool libevent_cpp::util_string::is_equals(
@@ -11,4 +12,39 @@ bool libevent_cpp::util_string::is_equals(
         }
     }
     return true; 
+}
+
+std::string libevent_cpp::util_string::string_from_utf8(const std::string& in) {
+    std::string result;
+    std::stringstream ss;
+    size_t i = 0, len = in.length();
+    bool flag = false;
+    while (i < len) {
+        char ch = in[i++];
+        if (ch == '%') {
+            flag = true;
+            ss << static_cast<char>((16 * hex_to_int(in[i++])) + hex_to_int(in[i++]));
+        } else {
+            if (flag) {
+                result += ss.str();
+                std::stringstream().swap(ss);
+            }
+            result += ch;
+            flag = false;
+        }
+    }
+    if (flag) {
+        result += ss.str();
+    }
+    return result; 
+}
+
+int libevent_cpp::util_string::hex_to_int(char ch) {
+    if (ch >= '0' && ch <= '9') {
+        return (ch - 48);
+    } else if (ch >= 'A' && ch <= 'Z') {
+        return (ch - 55);
+    } else {
+        return (ch - 87);
+    }
 }

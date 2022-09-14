@@ -44,6 +44,8 @@ public:
     void process_active_events();
     // 初始化活跃队列的优先级
     bool init_priority(int priorities);
+    // 清理 io 事件
+    void clean_io_event(const std::shared_ptr<io_event>& ev);
 
     // 注册回调函数
     template <typename E, typename F, typename... Rest> 

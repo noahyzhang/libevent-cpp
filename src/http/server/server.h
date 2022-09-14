@@ -21,11 +21,12 @@ public:
         return pool_->get_idle_thread_num();
     }
 
-
 private:
     std::shared_ptr<thread_pool> pool_ = nullptr;
     std::shared_ptr<event_base> base_ = nullptr;
-    std::map<std::string, Handle
+
+public:
+    std::map<std::string, HandleCallBack> handle_callbacks;
 
 };
 
