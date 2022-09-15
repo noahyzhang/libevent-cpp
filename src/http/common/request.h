@@ -32,11 +32,10 @@ public:
     void send_error(int errorno, std::string reason); 
     void send_not_found();
     void reset();
+    void send_reply(int code, const std::string& reason, std::unique_ptr<buffer> buf);
  
-
 private:
     void send_page(std::unique_ptr<buffer> buf);
-    void send_reply(int code, const std::string& reason, std::unique_ptr<buffer> buf);
     void send_reply_start(int code, const std::string& reason);
     void send_reply_chunk(std::unique_ptr<buffer> buf);
     void send_reply_end();
