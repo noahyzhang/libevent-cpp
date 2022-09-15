@@ -21,7 +21,7 @@ bool libevent_cpp::event_base::init_priority(int priorities) {
         active_event_queues_.clear();
     }
     active_event_queues_.resize(priorities);
-    return true; 
+    return true;
 }
 
 bool libevent_cpp::event_base::add_event(const std::shared_ptr<event>& ev) {
@@ -33,7 +33,7 @@ bool libevent_cpp::event_base::add_event(const std::shared_ptr<event>& ev) {
             return false;
         }
         fd_map_io_event_[io_ev->fd_] = io_ev;
-        return add(io_ev); 
+        return add(io_ev);
     } else {
         logger::error("event_base::add_event error, incorrect event type");
         return false;

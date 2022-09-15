@@ -37,9 +37,9 @@ public:
     // 移除事件
     bool remove_event(const std::shared_ptr<event>& ev);
     // 将事件添加到活跃队列中
-    void push_event_active_queue(std::shared_ptr<event> ev); 
+    void push_event_active_queue(std::shared_ptr<event> ev);
     // 开始调度 
-    bool start_dispatch(); 
+    bool start_dispatch();
     // 处理活跃事件
     void process_active_events();
     // 初始化活跃队列的优先级
