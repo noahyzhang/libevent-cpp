@@ -1,3 +1,6 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include "http/server/server.h"
 #include "base/epoll_base.h"
 #include "util/util_network.h"
@@ -9,7 +12,7 @@ libevent_cpp::http_server::http_server() {
 
 libevent_cpp::http_server::~http_server() {
     for (size_t i = 0; i < threads_.size(); i++) {
-        // TODO 
+        threads_[i]->set_terminate();
     }
 }
 

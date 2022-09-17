@@ -1,3 +1,6 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include "http/server/server.h"
 
 void home_cb(libevent_cpp::http_request* req) {

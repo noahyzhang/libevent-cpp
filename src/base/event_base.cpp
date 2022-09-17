@@ -1,10 +1,13 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <algorithm>
-#include "event_base.h"
-#include "util/log/logger.h"
+#include "base/event_base.h"
+#include "util/util_logger.h"
 
 libevent_cpp::event_base::event_base() {
     // 默认只有一个优先级
-    init_priority(1); 
+    init_priority(1);
 }
 
 libevent_cpp::event_base::~event_base() {
@@ -44,7 +47,7 @@ bool libevent_cpp::event_base::remove_event(const std::shared_ptr<event>& ev) {
     if (std::dynamic_pointer_cast<io_event>(ev)) {
         auto io_ev = std::dynamic_pointer_cast<io_event>(ev);
         if (fd_map_io_event_.count(io_ev->fd_) == 0) {
-            return true; 
+            return true;
         }
         return remove(io_ev);
     } else {
@@ -71,29 +74,30 @@ bool libevent_cpp::event_base::start_dispatch() {
         logger::debug("event_base::start_dispatch");
         if (!get_io_event_number()) {
             logger::warn("event_base::start_dispatch hava no events, just exit");
-            return false; 
+            return false;
         }
         bool res = dispatch(nullptr);
         if (!res) {
             logger::error("event_base::start_dispatch dispatch failed");
-            return false; 
+            return false;
         }
         // 如果有活跃事件
-        if(get_active_event_number()) {
-            process_active_events(); 
+        if (get_active_event_number()) {
+            process_active_events();
         }
     }
-    return true; 
+    return true;
 }
 
 void libevent_cpp::event_base::process_active_events() {
-    if (active_event_queues_.empty()) return; 
-    auto it = std::find_if(active_event_queues_.begin(), active_event_queues_.end(), [](decltype(active_event_queues_[0]) q) { return !q.empty(); });
+    if (active_event_queues_.empty()) return;
+    auto it = std::find_if(active_event_queues_.begin(), active_event_queues_.end(),
+            [](decltype(active_event_queues_[0]) q) { return !q.empty(); });
     auto &q = *it;
     while (!q.empty()) {
         auto ev = q.front();
         q.pop();
-        // 取到 event 对应的回调函数，执行回调函数 
+        // 取到 event 对应的回调函数，执行回调函数
         auto f = callback_func_map_[ev->event_id_];
         if (f) {
             (*f)();

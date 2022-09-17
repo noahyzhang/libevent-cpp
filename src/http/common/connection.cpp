@@ -1,3 +1,8 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
+#include <memory>
+#include <utility>
 #include "http/common/request.h"
 #include "http/common/connection.h"
 #include "util/util_logger.h"
@@ -16,7 +21,7 @@ libevent_cpp::http_connection::http_connection(
 }
 
 void libevent_cpp::http_connection::reset() {
-    
+
 }
 
 void libevent_cpp::http_connection::close(int op) {
@@ -34,7 +39,7 @@ void libevent_cpp::http_connection::start_read() {
 
 void libevent_cpp::http_connection::start_write() {
     if (get_output_buf_length() <= 0) {
-        return; 
+        return;
     }
     state_ = WRITING;
     add_write_and_timer();
@@ -43,7 +48,7 @@ void libevent_cpp::http_connection::start_write() {
 void libevent_cpp::http_connection::add_read_and_timer() {
     add_read_event();
     if (timeout_ > 0) {
-        read_timer_->set_timer(timeout_, 0); 
+        read_timer_->set_timer(timeout_, 0);
         get_event_base()->add_event(read_timer_);
     }
 }
@@ -66,12 +71,12 @@ void libevent_cpp::http_connection::remove_write_and_timer() {
 
 inline libevent_cpp::http_request* libevent_cpp::http_connection::current_request() {
     if (requests_.empty()) {
-        logger::warn("no request"); 
+        logger::warn("no request");
         // TODO 
         close(1);
-        return nullptr; 
+        return nullptr;
     }
-    return requests_.front().get(); 
+    return requests_.front().get();
 }
 
 void libevent_cpp::http_connection::pop_request() {
@@ -98,7 +103,7 @@ inline std::unique_ptr<libevent_cpp::http_request> libevent_cpp::http_connection
 
 void libevent_cpp::http_connection::read_http() {
     if (is_closed() || requests_.empty()) {
-        return; 
+        return;
     }
     switch (state_) {
     case READING_FIRSTLINE:
@@ -114,8 +119,8 @@ void libevent_cpp::http_connection::read_http() {
         read_trailer();
         break;
     case DISCONNECTED:
-    case CONNECTING: 
-    case IDLE: 
+    case CONNECTING:
+    case IDLE:
     case WRITING:
     default:
         logger::error("invalid connection stte: %d", state_);

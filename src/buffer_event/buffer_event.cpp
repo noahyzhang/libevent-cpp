@@ -1,9 +1,13 @@
-#include "buffer_event.h"
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
+#include <memory>
+#include "buffer_event/buffer_event.h"
 
 libevent_cpp::buffer_event::buffer_event(std::shared_ptr<event_base> base, int fd) : base_(base) {
     input_ = std::unique_ptr<buffer>(new buffer);
     output_ = std::unique_ptr<buffer>(new buffer);
-    ev_ = std::make_shared<io_event>(fd, NONE); 
+    ev_ = std::make_shared<io_event>(fd, NONE);
     base->register_callback(ev_, io_callback, this);
 }
 
@@ -19,12 +23,12 @@ int libevent_cpp::buffer_event::write(void* data, size_t size) {
 }
 
 int libevent_cpp::buffer_event::read(void* data, size_t size) {
-    return input_->pop_front(data, size); 
+    return input_->pop_front(data, size);
 }
 
 void libevent_cpp::buffer_event::add_read_event() {
     ev_->enable_read_event_status_active();
-    get_event_base()->add_event(ev_); 
+    get_event_base()->add_event(ev_);
 }
 
 void libevent_cpp::buffer_event::add_write_event() {
@@ -39,7 +43,7 @@ void libevent_cpp::buffer_event::remove_read_event() {
 
 void libevent_cpp::buffer_event::remove_write_event() {
     ev_->disable_write_event_status_active();
-    get_event_base()->remove_event(ev_); 
+    get_event_base()->remove_event(ev_);
 }
 
 void libevent_cpp::buffer_event::io_callback(buffer_event* bev) {
@@ -51,7 +55,7 @@ void libevent_cpp::buffer_event::io_callback(buffer_event* bev) {
             bev->add_read_event();
             if (bev->read_cb_) {
                 (*bev->read_cb_)();
-            } 
+            }
         } else {
             if (res == 0) {
                 ev->err = EOF;
@@ -60,7 +64,7 @@ void libevent_cpp::buffer_event::io_callback(buffer_event* bev) {
                 }
             } else {
                 ev->err = errno;
-                // 对于资源不可用或者信号中断的错误，可以去读 
+                // 对于资源不可用或者信号中断的错误，可以去读
                 if (errno == EAGAIN || errno == EINTR) {
                     bev->add_read_event();
                 } else if (bev->error_cb_) {
@@ -87,7 +91,7 @@ void libevent_cpp::buffer_event::io_callback(buffer_event* bev) {
             }
         }
         if (bev->write_cb_) {
-            (*bev->write_cb_)(); 
+            (*bev->write_cb_)();
         }
     }
 }

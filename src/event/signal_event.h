@@ -1,21 +1,21 @@
-#ifndef LIBEVENT_CPP_SIGNAL_EVENT_H
-#define LIBEVENT_CPP_SIGNAL_EVENT_H
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
 
-#include "event.h"
+#pragma once
+
+#include "event/event.h"
 
 namespace libevent_cpp {
 
 class signal_event : public event {
-private:  
+ private:
     int signal_ = -1;
 
-public:  
-    explicit signal_event(int signal) : signal_(signal) {} 
+ public:
+    explicit signal_event(int signal) : signal_(signal) {}
     ~signal_event() = default;
 
     inline void set_signal(int signal) { signal_ = signal; }
-}; 
+};
 
-} // namespace libevent_cpp 
-
-#endif // LIBEVENT_CPP_SIGNAL_EVENT_H
+}  // namespace libevent_cpp

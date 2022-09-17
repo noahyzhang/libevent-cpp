@@ -1,7 +1,10 @@
-#include <iostream>
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <iostream>
 #include "base/epoll_base.h"
 #include "event/io_event.h"
 #include "util/util_logger.h"
@@ -15,10 +18,10 @@ void fifo_read(std::shared_ptr<libevent_cpp::io_event> ev) {
     } else if (len == 0) {
         std::cout << "connection closed" << std::endl;
         return;
-    } 
+    }
     buf[len] = '\0';
     std::cout << buf << std::endl;
-} 
+}
 
 int main() {
     auto event_base = std::make_shared<libevent_cpp::epoll_base>();

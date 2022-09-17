@@ -1,3 +1,6 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <sys/socket.h>
 #include <string.h>
 #include <iostream>

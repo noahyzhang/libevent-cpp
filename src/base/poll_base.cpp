@@ -1,5 +1,9 @@
-#include "poll_base.h"
-#include "util/log/logger.h"
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
+#include <memory>
+#include "base/poll_base.h"
+#include "util/util_logger.h"
 
 bool libevent_cpp::poll_base::add(std::shared_ptr<io_event> ev) {
     struct pollfd* pfd = fd_map_poll_[ev->fd_];
@@ -16,13 +20,13 @@ bool libevent_cpp::poll_base::add(std::shared_ptr<io_event> ev) {
     if (ev->is_event_type_writeable()) {
         pfd->events |= POLLOUT;
     }
-    return true; 
+    return true;
 }
 
 bool libevent_cpp::poll_base::remove(std::shared_ptr<io_event> ev) {
     delete fd_map_poll_[ev->fd_];
     fd_map_poll_.erase(ev->fd_);
-    return true; 
+    return true;
 }
 
 bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
@@ -41,12 +45,12 @@ bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
     if (res < 0) {
         if (errno != EINTR) {
             logger::error("poll_base::dispatch poll err");
-            return false; 
+            return false;
         }
-        // TODO 其他信号来了，需要处理 
+        // TODO 其他信号来了，需要处理
         return true;
     }
-    if (res == 0) return true; // 如果没有就绪的文件描述符，直接返回
+    if (res == 0) return true;  // 如果没有就绪的文件描述符，直接返回
     int what = 0;
     for (int i = 0; i < nfds; i++) {
         what = fds[i].revents;
@@ -63,9 +67,9 @@ bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
                 io_ev->enable_write_event_status_active();
             }
             if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
-                push_event_active_queue(io_ev); 
+                push_event_active_queue(io_ev);
             }
         }
     }
-    return true; 
+    return true;
 }

@@ -1,6 +1,9 @@
-#include <iostream>
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <stdarg.h>
-#include "logger.h"
+#include <iostream>
+#include "util/util_logger.h"
 
 void libevent_cpp::logger::log(LIBEVENT_CPP_LOG_LEVEL log_level, const char* fmt, va_list ap) {
     char buf[1024];
@@ -11,7 +14,7 @@ void libevent_cpp::logger::log(LIBEVENT_CPP_LOG_LEVEL log_level, const char* fmt
     } else {
         buf[0] = '\0';
     }
-    fprintf(stderr, "[Libevent-cpp %s] %s \n", get_log_level_str(log_level), buf); 
+    fprintf(stderr, "[Libevent-cpp %s] %s \n", get_log_level_str(log_level), buf);
 }
 
 void libevent_cpp::logger::error(const char* fmt, ...) {

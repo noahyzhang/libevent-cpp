@@ -1,22 +1,21 @@
-#ifndef LIBEVENT_CPP_UTIL_STRING_H
-#define LIBEVENT_CPP_UTIL_STRING_H
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
 
-#include <string> 
+#pragma once
+
+#include <string>
 
 namespace libevent_cpp {
 
 class util_string {
-
-public:
+ public:
     static bool is_equals(const std::string& str1, const std::string& str2);
     // 将字符串的中 %xx 进行转换具体的字符
     static std::string string_from_utf8(const std::string& in);
 
-private:
+ private:
     // 十六进制的字符转换为整数
     static int hex_to_int(char ch);
-}; 
+};
 
-} // namespace libevent_cpp 
-
-#endif // LIBEVENT_CPP_UTIL_STRING_H
+}  // namespace libevent_cpp

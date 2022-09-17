@@ -1,5 +1,7 @@
-#ifndef LIBEVENT_CPP_SERVER_H
-#define LIBEVENT_CPP_SERVER_H
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
+#pragma once
 
 #include <memory>
 #include <map>
@@ -9,6 +11,7 @@
 #include "base/event_base.h"
 #include "common/request.h"
 #include "http/server/server_thread.h"
+#include "thread/concurrent_map.h"
 
 namespace libevent_cpp {
 
@@ -39,6 +42,9 @@ class http_server {
         handle_callbacks_[what] = cb;
     }
 
+ public:
+    concurrent_queue<std::unique_ptr<http_client_info>> client_info_queue_;
+
  private:
     static void dispatch_task(http_server_thread* thread);
     static void listen_cb(int fd, http_server* server);
@@ -48,10 +54,8 @@ class http_server {
     std::shared_ptr<event_base> base_ = nullptr;
     std::vector<std::unique_ptr<http_server_thread>> threads_;
     std::map<std::string, HandleCallBack> handle_callbacks_;
-    concurrent_queue<std::unique_ptr<http_client_info>> client_info_queue_;
     int timeout_ = -1;
 };
 
 }  // namespace libevent_cpp
 
-#endif  // LIBEVENT_CPP_SERVER_H

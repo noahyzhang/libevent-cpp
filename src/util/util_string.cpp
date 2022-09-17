@@ -1,5 +1,8 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <sstream>
-#include "util_string.h"
+#include "util/util_string.h"
 
 bool libevent_cpp::util_string::is_equals(
     const std::string& str1, const std::string& str2) {
@@ -8,10 +11,10 @@ bool libevent_cpp::util_string::is_equals(
     }
     for (size_t i = 0; i < str1.size(); i++) {
         if (std::tolower(str1[i]) != std::tolower(str2[i])) {
-            return false; 
+            return false;
         }
     }
-    return true; 
+    return true;
 }
 
 std::string libevent_cpp::util_string::string_from_utf8(const std::string& in) {
@@ -36,7 +39,7 @@ std::string libevent_cpp::util_string::string_from_utf8(const std::string& in) {
     if (flag) {
         result += ss.str();
     }
-    return result; 
+    return result;
 }
 
 int libevent_cpp::util_string::hex_to_int(char ch) {

@@ -1,4 +1,8 @@
-#include "client.h"
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
+#include <string>
+#include "http/client/client.h"
 #include "base/epoll_base.h"
 #include "util/util_network.h"
 
@@ -9,14 +13,14 @@ libevent_cpp::http_client::http_client() {
 std::unique_ptr<libevent_cpp::http_client_connection> libevent_cpp::http_client::make_connection(
     const std::string& server_address, unsigned int server_port) {
     int fd = util_network::get_nonblock_socket();
-    auto conn = std::unique_ptr<http_client_connection>(new http_client_connection(base_, fd, timeout_))); 
+    auto conn = std::unique_ptr<http_client_connection>(new http_client_connection(base_, fd, timeout_)));
     conn->set_server_addr(server_address);
     conn->set_server_port(server_port);
     if (conn->connect() < 0) {
         logger::error("make_connection failed, client connect to fd: %d err", fd);
-        exit(-1); 
+        exit(-1);
     }
-    return conn; 
+    return conn;
 }
 
 void libevent_cpp::http_client::run() {

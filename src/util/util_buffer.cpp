@@ -1,7 +1,11 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <string.h>
 #include <unistd.h>
-#include "buffer.h"
-#include "log/logger.h"
+#include <string>
+#include "util/util_buffer.h"
+#include "util/util_logger.h"
 
 void libevent_cpp::buffer::reset() {
     remove_front(cur_len_);
@@ -9,7 +13,7 @@ void libevent_cpp::buffer::reset() {
 
 void libevent_cpp::buffer::resize(size_t n) {
     remove_front(cur_len_);
-    expand_buffer(n); 
+    expand_buffer(n);
 }
 
 std::string libevent_cpp::buffer::readline() {
@@ -25,9 +29,9 @@ std::string libevent_cpp::buffer::readline() {
     // 检测 '\r\n' 或 '\n\r' 的情况
     int is_next_index = 0;
     if (index + 1 < cur_len_) {
-        if ((data[index] == '\r' && data[index+1] == '\n') || 
+        if ((data[index] == '\r' && data[index+1] == '\n') ||
             (data[index] == '\n' && data[index+1] == '\r')) {
-            is_next_index = 1; 
+            is_next_index = 1;
         }
     }
     data[index] = '\0';
@@ -38,7 +42,7 @@ std::string libevent_cpp::buffer::readline() {
 }
 
 int libevent_cpp::buffer::push_back(void* data, size_t data_len) {
-    // 检测是否需要扩展 
+    // 检测是否需要扩展
     // TODO 
     size_t need_space = cur_len_ + data_len;
     if (total_len_ < need_space) {
@@ -49,7 +53,7 @@ int libevent_cpp::buffer::push_back(void* data, size_t data_len) {
     // 尾插
     memcpy(buf_ + cur_len_, data, data_len);
     cur_len_ += data_len;
-    return 0; 
+    return 0;
 }
 
 int libevent_cpp::buffer::push_back_buffer(std::unique_ptr<buffer>& buf, size_t buf_len) {
@@ -62,7 +66,7 @@ int libevent_cpp::buffer::push_back_buffer(std::unique_ptr<buffer>& buf, size_t 
     if (res == 0) {
         // TODO 
     }
-    return res; 
+    return res;
 }
 
 size_t libevent_cpp::buffer::pop_front(void* data, size_t data_len) {
@@ -76,7 +80,7 @@ size_t libevent_cpp::buffer::pop_front(void* data, size_t data_len) {
 
 int libevent_cpp::buffer::read_file(size_t fd, int size) {
     if (size < 0 || size > DEFAULT_ONCE_READ_FILE_MAX_BYTES) {
-        size = DEFAULT_ONCE_READ_FILE_MAX_BYTES; 
+        size = DEFAULT_ONCE_READ_FILE_MAX_BYTES;
     }
 
     if (expand_buffer(size) == -1) {
@@ -97,7 +101,7 @@ size_t libevent_cpp::buffer::write_file(size_t fd) {
         return real_write_size;
     }
     remove_front(real_write_size);
-    return real_write_size; 
+    return real_write_size;
 }
 
 int libevent_cpp::buffer::expand_buffer(size_t data_len) {
@@ -134,8 +138,8 @@ void libevent_cpp::buffer::remove_front(size_t len) {
         start_index_ = 0;
     } else {
         buf_ += len;
-        start_index_ += len; 
-        cur_len_ -= len; 
+        start_index_ += len;
+        cur_len_ -= len;
     }
 }
 

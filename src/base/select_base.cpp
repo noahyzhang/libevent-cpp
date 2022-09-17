@@ -1,9 +1,13 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
 #include <stdlib.h>
 #include <string.h>
-#include "select_base.h"
-#include "util/log/logger.h"
+#include <memory>
+#include "base/select_base.h"
+#include "util/util_logger.h"
 
-#define MAX_SELECT_FD_SIZE 1024 
+#define MAX_SELECT_FD_SIZE 1024
 
 bool libevent_cpp::select_base::init() {
     event_read_fds_in_ = new fd_set();
@@ -25,32 +29,32 @@ libevent_cpp::select_base::~select_base() {
 }
 
 bool libevent_cpp::select_base::add(std::shared_ptr<io_event> ev) {
-    // select 系统调用不能超过 1024 个文件描述符 
+    // select 系统调用不能超过 1024 个文件描述符
     if (ev->fd_ > MAX_SELECT_FD_SIZE) {
         logger::error("select_base add select fd > MAX_SELECT_FD_SIZE: %d", MAX_SELECT_FD_SIZE);
         return false;
     }
-    // 如果事件可读，则设置读 fdset 的位 fd 
+    // 如果事件可读，则设置读 fdset 的位 fd
     if (ev->is_event_type_readable()) {
         FD_SET(ev->fd_, event_read_fds_in_);
     }
-    // 如果事件可写，则设置写 fdset 的位 fd 
+    // 如果事件可写，则设置写 fdset 的位 fd
     if (ev->is_event_type_writeable()) {
         FD_SET(ev->fd_, event_write_fds_in_);
     }
-    return true; 
+    return true;
 }
 
 bool libevent_cpp::select_base::remove(std::shared_ptr<io_event> ev) {
-    // 如果事件可读，则清除读 fdset 的位 fd 
+    // 如果事件可读，则清除读 fdset 的位 fd
     if (!ev->is_event_type_readable()) {
         FD_CLR(ev->fd_, event_read_fds_in_);
     }
-    // 如果事件可写，则清除写 fdset 的位 fd 
+    // 如果事件可写，则清除写 fdset 的位 fd
     if (!ev->is_event_type_writeable()) {
         FD_CLR(ev->fd_, event_write_fds_in_);
     }
-    return true; 
+    return true;
 }
 
 bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
@@ -65,10 +69,10 @@ bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
             return false;
         }
         logger::info("select dispatch receive Interrupted, errno: %d", errno);
-        return true; 
+        return true;
     }
     int readable, writeable;
-    // 遍历所有的 fd 对应的 event 
+    // 遍历所有的 fd 对应的 event
     for (auto kv : fd_map_io_event_) {
         readable = false;
         writeable = false;
@@ -94,5 +98,5 @@ bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
             }
         }
     }
-    return true; 
+    return true;
 }

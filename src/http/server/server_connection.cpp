@@ -1,14 +1,18 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
+
+#include <utility>
 #include "http/server/server_connection.h"
 #include "util/util_logger.h"
 
 void libevent_cpp::read_timeout_cb(http_server_connection* conn) {
-    logger::warn("server connection read timeout, client addr: %s, port: %d", 
+    logger::warn("server connection read timeout, client addr: %s, port: %d",
         conn->get_client_address(), conn->get_client_port());
     conn->fail(HTTP_TIMEOUT);
 }
 
 void libevent_cpp::write_timeout_cb(http_server_connection* conn) {
-    logger::warn("server connection write timeout, client addr: %s, port: %d", 
+    logger::warn("server connection write timeout, client addr: %s, port: %d",
         conn->get_client_address(), conn->get_client_port());
     conn->fail(HTTP_TIMEOUT);
 }
@@ -56,9 +60,8 @@ void libevent_cpp::http_server_connection::handle_request(http_request* req) {
 }
 
 void libevent_cpp::http_server_connection::fail(http_connection_error err) {
-    logger::warn("server connection fail on err: %d, state: %d", err, state_); 
-    switch (err)
-    {
+    logger::warn("server connection fail on err: %d, state: %d", err, state_);
+    switch (err) {
     case HTTP_TIMEOUT:
         close(1);
         return;
@@ -72,7 +75,7 @@ void libevent_cpp::http_server_connection::fail(http_connection_error err) {
             return;
         }
         if (!req->get_uri().empty()) {
-            req->set_uri(""); 
+            req->set_uri("");
         }
         if (req->get_cb()) {
             req->get_cb()(req);
