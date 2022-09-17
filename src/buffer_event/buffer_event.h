@@ -79,7 +79,7 @@ protected:
 
 public:
     std::shared_ptr<Callback> read_cb_ = nullptr;
-    std::shared_ptr<Callback> eof_cb_ = nullptr; 
+    std::shared_ptr<Callback> eof_cb_ = nullptr;
     std::shared_ptr<Callback> write_cb_ = nullptr;
     std::shared_ptr<Callback> error_cb_ = nullptr;
 };

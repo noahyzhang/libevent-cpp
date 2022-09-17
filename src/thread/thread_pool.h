@@ -10,43 +10,15 @@
 #include <functional>
 #include <queue>
 #include <future>
+#include "concurrent_map.h"
 
 namespace libevent_cpp {
-
-namespace detail {
-
-template <typename T>
-class Queue {
-private:  
-    std::queue<T> queue_;
-    std::mutex mutex_;
-public:  
-    void push(T const& value) {
-        std::unique_lock<std::mutex> lock(mutex_); 
-        queue_.push(value); 
-    }
-    bool pop(T& value) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        if (queue_.empty()) {
-            return false;
-        }
-        value = queue_.front();
-        queue_.pop();
-        return true;  
-    }
-    bool empty() {
-        std::unique_lock<std::mutex> lock(mutex_);
-        return queue_.empty();
-    }
-};
-
-} // namespace detail 
 
 class thread_pool {
 private:  
     std::vector<std::unique_ptr<std::thread>> threads_;
     std::vector<std::shared_ptr<std::atomic<bool>>> flags_;
-    detail::Queue<std::function<void(int id)>*> queue_; 
+    concurrent_queue<std::function<void(int id)>*> queue_; 
     std::atomic<bool> is_done_;
     std::atomic<bool> is_stop_;
     std::atomic<size_t> waiting_threads_; // 处于等待中的线程数量 

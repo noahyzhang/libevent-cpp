@@ -30,9 +30,9 @@ private:
     std::shared_ptr<signal_event> ev_sigpipe_;
     std::list<std::unique_ptr<http_server_connection>> connection_list_;
     std::queue<std::unique_ptr<http_server_connection>> empty_queue_;
-}; 
+};
 
-} // namespace libevent_cpp 
+}  // namespace libevent_cpp 
 
 
 #endif // LIBEVENT_CPP_SERVER_THREAD_H 
