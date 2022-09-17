@@ -148,3 +148,17 @@ void libevent_cpp::buffer::reset_buffer() {
     buf_ = origin_buf_;
     start_index_ = 0;
 }
+
+unsigned char* libevent_cpp::buffer::find(unsigned char* what, size_t len) {
+    size_t remain = cur_len_;
+    auto search = buf_;
+    unsigned char* p;
+    while ((p = (unsigned char*)memchr(search, *what, remain)) != nullptr && remain > len) {
+        if (memcmp(p, what, len) == 0) {
+            return (unsigned char*)p;
+        }
+        search = p + 1;
+        remain = cur_len_ - (search - buf_);
+    }
+    return nullptr;
+}

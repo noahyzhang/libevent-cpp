@@ -53,10 +53,10 @@ class buffer {
     size_t pop_front(void* data, size_t data_len);
 
     // 查询
-    // unsigned char* find(unsigned char* what, size_t len);
-    // inline unsigned char* find_string(const std::string& what) {
-    //     return find((unsigned char*)what.c_str(), what.length());
-    // }
+    unsigned char* find(unsigned char* what, size_t len);
+    inline unsigned char* find_string(const std::string& what) {
+        return find((unsigned char*)what.c_str(), what.length());
+    }
 
     inline size_t get_cur_length() const { return cur_len_; }
 

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <netdb.h>
 #include <string>
 #include <memory>
 
@@ -17,8 +18,6 @@ class util_network {
     static int bind_socket(const std::string& address, unsigned short port, bool reuse = true);
     static int listen_fd(int fd);
     static int accept_socket(int fd, std::shared_ptr<std::string> host, std::shared_ptr<int> port);
-
- private:
     static struct addrinfo* get_addr_info(const std::string& address, unsigned short port);
 };
 
