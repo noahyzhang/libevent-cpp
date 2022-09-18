@@ -67,7 +67,7 @@ bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
                 io_ev->enable_write_event_status_active();
             }
             if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
-                push_event_active_queue(io_ev);
+                push_event_active_queue(io_ev, 1);
             }
         }
     }

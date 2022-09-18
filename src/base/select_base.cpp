@@ -94,7 +94,7 @@ bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
             }
             // 如果此事件可读、可写，将它插入到活跃队列中
             if (ev->is_event_type_readable() || ev->is_event_type_writeable()) {
-                push_event_active_queue(ev);
+                push_event_active_queue(ev, 1);
             }
         }
     }

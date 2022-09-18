@@ -16,6 +16,7 @@ class signal_event : public event {
     ~signal_event() = default;
 
     inline void set_signal(int signal) { signal_ = signal; }
+    inline int get_signal() const { return signal_; }
 };
 
 }  // namespace libevent_cpp

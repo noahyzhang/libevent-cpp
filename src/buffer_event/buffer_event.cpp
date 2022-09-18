@@ -8,6 +8,7 @@ libevent_cpp::buffer_event::buffer_event(std::shared_ptr<event_base> base, int f
     input_ = std::unique_ptr<buffer>(new buffer);
     output_ = std::unique_ptr<buffer>(new buffer);
     ev_ = std::make_shared<io_event>(fd, NONE);
+    // 注册 IO 事件的回调
     base->register_callback(ev_, io_callback, this);
 }
 

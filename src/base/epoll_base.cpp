@@ -77,8 +77,12 @@ bool libevent_cpp::epoll_base::dispatch(struct timeval* tv) {
             logger::error("dispatch of epoll_base failed");
             return false;
         }
-        // TODO 被信号中断，处理信号
+        process_signal_event();
         return 0;
+    }
+    // epoll_wait 成功的情况下，也处理信号事件
+    if (caught_num_) {
+        process_signal_event();
     }
     int what = 0;
     for (int i = 0; i < res; ++i) {
@@ -101,11 +105,10 @@ bool libevent_cpp::epoll_base::dispatch(struct timeval* tv) {
                 }
                 if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
                     // 将此事件添加到活跃队列中
-                    push_event_active_queue(io_ev);
+                    push_event_active_queue(io_ev, 1);
                 }
             }
         }
     }
     return true;
 }
-

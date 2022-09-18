@@ -5,6 +5,9 @@
 #include "base/event_base.h"
 #include "util/util_logger.h"
 
+volatile sig_atomic_t libevent_cpp::event_base::caught_num_ = 0;
+std::vector<int> libevent_cpp::event_base::caught_signal_vec_ = {};
+
 libevent_cpp::event_base::event_base() {
     // 默认只有一个优先级
     init_priority(1);
@@ -63,7 +66,8 @@ void libevent_cpp::event_base::clean_io_event(const std::shared_ptr<io_event>& e
     // TODO 
 }
 
-void libevent_cpp::event_base::push_event_active_queue(std::shared_ptr<event> ev) {
+void libevent_cpp::event_base::push_event_active_queue(std::shared_ptr<event> ev, size_t call_num) {
+    ev->call_num_ = call_num;
     active_event_queues_[ev->priority_].push(ev);
     ev->set_active_status();
 }
@@ -104,4 +108,24 @@ void libevent_cpp::event_base::process_active_events() {
         }
         ev->clear_active_status();
     }
+}
+
+void libevent_cpp::event_base::process_signal_event() {
+    int call_num;
+    auto iter = signal_event_list_.begin();
+    while (iter != signal_event_list_.end()) {
+        auto ev = *iter;
+        call_num = caught_signal_vec_[ev->get_signal()];
+        if (call_num) {
+            // 如果是非持久信号事件，则需要移除这个信号事件
+            if (!(ev->is_persistent())) {
+                iter = signal_event_list_.erase(iter);
+            }
+            push_event_active_queue(ev, call_num);
+        }
+        iter++;
+    }
+    // 将捕获信号的数组清空
+    std::fill(caught_signal_vec_.begin(), caught_signal_vec_.end(), nullptr);
+    caught_num_ = 0;
 }

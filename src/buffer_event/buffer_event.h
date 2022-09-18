@@ -5,6 +5,7 @@
 
 #include <utility>
 #include <memory>
+#include <string>
 #include "util/util_buffer.h"
 #include "base/event_base.h"
 #include "util/util_logger.h"
@@ -16,36 +17,43 @@ class buffer_event {
     buffer_event(std::shared_ptr<event_base> base, int fd);
     ~buffer_event() = default;
 
+    // 注册读事件回调函数
     template <typename F, typename... Rest>
     void register_read_cb(F&& f, Rest&&... rest) {
         auto task = std::bind(std::forward<F>(f), std::forward<Rest>(rest)...);
         read_cb_ = std::make_shared<Callback>([task]() { task(); });
     }
 
+    // 注册 eof 事件回调函数
     template <typename F, typename... Rest>
     void register_eof_cb(F&& f, Rest&&... rest) {
         auto task = std::bind(std::forward<F>(f), std::forward<Rest>(rest)...);
         eof_cb_ = std::make_shared<Callback>([task]() { task(); });
     }
 
+    // 注册写事件回调函数
     template <typename F, typename... Rest>
     void register_write_cb(F&& f, Rest&&... rest) {
         auto task = std::bind(std::forward<F>(f), std::forward<Rest>(rest)...);
         write_cb_ = std::make_shared<Callback>([task]() { task(); });
     }
 
+    // 注册错误事件回调函数
     template <typename F, typename... Rest>
     void register_error_cb(F&& f, Rest&&... rest) {
         auto task = std::bind(std::forward<F>(f), std::forward<Rest>(rest)...);
         error_cb_ = std::make_shared<Callback>([task]() { task(); });
     }
 
+    // 设置文件描述符
     inline void set_fd(int fd) { ev_->set_fd(fd); }
 
     inline size_t get_input_buf_length() const { return input_->get_cur_length(); }
     inline size_t get_output_buf_length() const { return output_->get_cur_length(); }
     inline const char* get_input_buf_data() const { return input_->get_data(); }
     inline const char* get_output_buf_data() const { return output_->get_data(); }
+    inline std::unique_ptr<buffer>& get_input_buf() { return input_; }
+    inline std::unique_ptr<buffer>& get_output_buf() { return output_; }
 
     std::shared_ptr<event_base> get_event_base() {
         auto b = base_.lock();
@@ -72,13 +80,17 @@ class buffer_event {
         return ev_->fd_;
     }
 
+    inline size_t write_string(const std::string& str) {
+        return output_->push_back_string(str);
+    }
+
  private:
     static void io_callback(buffer_event* bev);
 
  protected:
     std::unique_ptr<buffer> input_;
     std::unique_ptr<buffer> output_;
-    std::shared_ptr<io_event> ev_ = nullptr;
+    std::shared_ptr<io_event> ev_;
     std::weak_ptr<event_base> base_;
 
  public:

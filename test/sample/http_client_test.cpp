@@ -4,6 +4,7 @@
 #include "util/util_network.h"
 #include "util/util_logger.h"
 #include "base/epoll_base.h"
+#include "http/common/request.h"
 #include "buffer_event/buffer_event.h"
 
 #define DEFAULT_HOST "127.0.0.1"
@@ -28,15 +29,39 @@ int http_connect(const std::string& address, uint16_t port) {
 }
 
 void http_read_cb(libevent_cpp::buffer_event* buf_ev) {
-    if (buf_ev.get)
+    if (buf_ev->get_input_buf()->find_string("This is funny") != nullptr) {
+        auto req = std::make_shared<libevent_cpp::http_request>(nullptr);
+        req->set_http_request_kind(libevent_cpp::RESPONSE);
+
+        auto line = buf_ev->get_input_buf()->readline();
+        req->parse_request_line
+    }
+}
+
+void http_write_cb(libevent_cpp::buffer_event* buf_ev) {
+
+}
+
+void http_err_cb(libevent_cpp::buffer_event* buf_ev) {
+
 }
 
 void http_basic_test() {
     int fd = http_connect(DEFAULT_HOST, DEFAULT_PORT);
     auto base = std::make_shared<libevent_cpp::epoll_base>();
     auto buf_ev = std::make_shared<libevent_cpp::buffer_event>(base, fd);
-    buf_ev->register_read_cb()
 
+    buf_ev->register_read_cb(http_read_cb, buf_ev.get());
+    buf_ev->register_write_cb(http_write_cb, buf_ev.get());
+    buf_ev->register_error_cb(http_err_cb, buf_ev.get());
+
+    buf_ev->write_string("GET /test HTTP/1.1\r\nHost: some");
+    buf_ev->write_string("host\r\nConnection: close\r\n\r\n");
+
+    buf_ev->add_read_event();
+    buf_ev->add_write_event();
+
+    base->start_dispatch();
 }
 
 int main() {
