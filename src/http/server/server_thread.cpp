@@ -3,6 +3,7 @@
 
 #include <signal.h>
 #include <utility>
+#include <string>
 #include "http/server/server_thread.h"
 #include "base/epoll_base.h"
 #include "util/util_linux.h"
@@ -31,6 +32,14 @@ void libevent_cpp::http_server_thread::dispatch() {
 
 void libevent_cpp::http_server_thread::set_terminate() {
     base_->set_terminated();
+}
+
+void libevent_cpp::http_server_thread::wakeup() {
+    static std::string msg = "0x123456";
+    size_t n = write(io_ev_->fd_, msg.c_str(), msg.length());
+    if (n <= 0) {
+        logger::error("wakeup failed, write eror");
+    }
 }
 
 std::unique_ptr<libevent_cpp::http_server_connection> libevent_cpp::http_server_thread::get_empty_connection() {

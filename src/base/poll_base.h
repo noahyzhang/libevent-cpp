@@ -10,6 +10,7 @@
 
 namespace libevent_cpp {
 
+// 采用 poll 的事件管理类
 class poll_base : public event_base {
  private:
     std::map<int, struct pollfd*> fd_map_poll_;
@@ -17,10 +18,10 @@ class poll_base : public event_base {
  public:
     poll_base() = default;
     ~poll_base() = default;
-    bool init() override { return true; }
-    bool add(std::shared_ptr<io_event> ev) override;
-    bool remove(std::shared_ptr<io_event> ev) override;
-    bool dispatch(struct timeval* tv) override;
+    int init() override { return true; }
+    int add(std::shared_ptr<io_event> ev) override;
+    int remove(std::shared_ptr<io_event> ev) override;
+    int dispatch(struct timeval* tv) override;
 };
 
 }  // namespace libevent_cpp

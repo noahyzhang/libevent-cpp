@@ -8,6 +8,7 @@
 
 namespace libevent_cpp {
 
+// 定时事件
 class time_event : public event {
  public:
     // 构造函数，将时间清空
@@ -16,6 +17,8 @@ class time_event : public event {
     }
     ~time_event() = default;
 
+ public:
+    // 设置定时事件的超时事件
     void set_timer(int sec, int usec) {
         struct timeval now, tv;
         // 获取当前值
@@ -27,11 +30,13 @@ class time_event : public event {
         // now 和 tv 求和，做为 timeout 的值
         timeradd(&now, &tv, &timeout);
     }
+    // 获取定时时间
     inline timeval get_timeout() const {
         return timeout;
     }
 
  private:
+    // 超时事件
     struct timeval timeout;
 };
 

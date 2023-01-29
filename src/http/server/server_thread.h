@@ -6,6 +6,7 @@
 #include <list>
 #include <queue>
 #include <memory>
+#include <sys/eventfd.h>
 #include "http/server/server.h"
 #include "event/signal_event.h"
 #include "http/server/server_connection.h"
@@ -19,6 +20,7 @@ class http_server_thread {
 
     void dispatch();
     void set_terminate();
+    void wakeup();
 
  private:
     std::unique_ptr<http_server_connection> get_empty_connection();

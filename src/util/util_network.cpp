@@ -86,7 +86,7 @@ struct addrinfo* libevent_cpp::util_network::get_addr_info(
     return aitop;
 }
 
-int libevent_cpp::util_network::bind_socket(const std::string& address, unsigned short port, bool reuse = true) {
+int libevent_cpp::util_network::bind_socket(const std::string& address, unsigned short port, bool reuse) {
     struct addrinfo* addr_info = nullptr;
     int flag_switch = 1;
     if (address.empty() || port == 0) {

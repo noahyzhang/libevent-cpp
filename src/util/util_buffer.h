@@ -44,7 +44,7 @@ class buffer {
 
     // 尾插
     int push_back(void* data, size_t data_len);
-    int push_back_buffer(const std::unique_ptr<buffer>& buf, size_t buf_len);
+    // int push_back_buffer(const std::unique_ptr<buffer>& buf, size_t buf_len);
     inline int push_back_string(const std::string& str) {
         return push_back((void*)(str.c_str()), str.size());
     }

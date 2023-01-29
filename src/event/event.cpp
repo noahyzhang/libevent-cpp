@@ -11,7 +11,7 @@ libevent_cpp::event::event() {
 
 void libevent_cpp::event::set_priority(int priority) {
     // 处于活跃状态的 event 不能设置优先级
-    if (get_active_status()) {
+    if (is_active_status()) {
         return;
     }
     // 设置优先级，这里没有做判断。在使用时需要做判断

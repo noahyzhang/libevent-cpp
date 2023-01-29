@@ -21,7 +21,7 @@ class thread_pool {
  private:
     std::vector<std::unique_ptr<std::thread>> threads_;
     std::vector<std::shared_ptr<std::atomic<bool>>> flags_;
-    concurrent_queue<std::function<void(int id)>*> queue_;
+    concurrent_queue<std::function<void(int)>*> queue_;
     std::atomic<bool> is_done_;
     std::atomic<bool> is_stop_;
     std::atomic<size_t> waiting_threads_;  // 处于等待中的线程数量
@@ -40,10 +40,11 @@ class thread_pool {
         auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
             std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
         )
-        auto func = new std::function<void(int id)>([pck](int id) {
-            (*pck)(id);
-        });
-        queue_.push(func);
+        // auto func = new std::function<void(int id)>([pck](int id) {
+        //     (*pck)(id);
+        // });
+        // queue_.push(func);
+        queue_.push( new std::function<void(int id)>([pck](int id) {(*pck)(id);}) );
         std::unique_lock<std::mutex> lock(mutex_);
         cv_.notify_one();
         return pck->get_future();

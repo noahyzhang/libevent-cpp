@@ -7,16 +7,21 @@
 
 namespace libevent_cpp {
 
+// 信号事件
 class signal_event : public event {
- private:
-    int signal_ = -1;
-
  public:
     explicit signal_event(int signal) : signal_(signal) {}
     ~signal_event() = default;
 
+ public:
+    // 设置事件的信号值
     inline void set_signal(int signal) { signal_ = signal; }
+    // 获取事件的信号值
     inline int get_signal() const { return signal_; }
+
+ private:
+    // 信号值
+    int signal_ = -1;
 };
 
 }  // namespace libevent_cpp

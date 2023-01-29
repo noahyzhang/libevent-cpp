@@ -1,6 +1,7 @@
 // Copyright 2022 Tencent LLC
 // Author: noahyzhang
 
+#include <algorithm>
 #include "http/server/server.h"
 #include "base/epoll_base.h"
 #include "util/util_network.h"
@@ -36,7 +37,26 @@ void libevent_cpp::http_server::resize_thread_pool(size_t thread_num) {
     }
 }
 
-void libevent_cpp::http_server::listen_cb(int fd, http_server* server) {
+void libevent_cpp::http_server::wakeup_some_thread(size_t thread_count) {
+    unsigned int rand_num;
+    for (size_t i = 0; i < thread_count; ++i) {
+        unsigned int tm = time(nullptr);
+        wakeup_one_thread(rand_r(&tm) % threads_.size());
+    }
+}
+
+void libevent_cpp::http_server::wakeup_all_thread() {
+    for (size_t i = 0; i < threads_.size(); ++i) {
+        wakeup_one_thread(i);
+    }
+}
+
+void libevent_cpp::http_server::wakeup_one_thread(size_t thread_num) {
+    if (thread_num > threads_.size()) return;
+    threads_[thread_num]->wakeup();
+}
+
+void libevent_cpp::http_server::listen_cb(int fd, std::shared_ptr<http_server> server) {
     std::string host;
     int port;
     int peer_fd = util_network::accept_socket(fd, std::make_shared<std::string>(host), std::make_shared<int>(port));
@@ -44,7 +64,8 @@ void libevent_cpp::http_server::listen_cb(int fd, http_server* server) {
     logger::info("http server accept new client with fd: %d, host: %s, port: %d", peer_fd, host.c_str(), port);
 
     server->client_info_queue_.push(std::unique_ptr<http_client_info>(new http_client_info{peer_fd, host, port}));
-    // TODO 
+    // 唤醒线程来处理
+    server->wakeup_some_thread(2);
 }
 
 int libevent_cpp::http_server::run(const std::string& address, unsigned short port) {
@@ -53,15 +74,16 @@ int libevent_cpp::http_server::run(const std::string& address, unsigned short po
     }
     int fd = util_network::bind_socket(address, port, true);
     if (fd < 0) {
-        exit(-1);
+        logger::error("bind socket failed, address: %s, port: %d", address, port);
+        return -1;
     }
     if (util_network::listen_fd(fd) < 0) {
-        return -1;
+        return -2;
     }
     // 使用一个读事件去 accept 文件描述符
     auto ev = create_event<io_event>(fd, READ_ONLY);
-    base_->register_callback(ev, listen_cb, fd, this);
-    // TODO 
+    base_->register_callback(ev, listen_cb, fd, get_shared_this_ptr());
+    ev->set_persistent();
     base_->add_event(ev);
 
     logger::info("http server listening on fd: %d, bound to port: %d, awaiting connections.");

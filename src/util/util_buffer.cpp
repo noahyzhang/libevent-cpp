@@ -56,18 +56,18 @@ int libevent_cpp::buffer::push_back(void* data, size_t data_len) {
     return 0;
 }
 
-int libevent_cpp::buffer::push_back_buffer(std::unique_ptr<buffer>& buf, size_t buf_len) {
-    if (!buf) return 0;
-    int real_len = buf_len;
-    if (real_len > buf->cur_len_ || buf_len < 0) {
-        real_len = buf->cur_len_;
-    }
-    int res = push_back(buf->buf_, real_len);
-    if (res == 0) {
-        // TODO 
-    }
-    return res;
-}
+// int libevent_cpp::buffer::push_back_buffer(std::unique_ptr<buffer>& buf, size_t buf_len) {
+//     if (!buf) return 0;
+//     int real_len = buf_len;
+//     if (real_len > buf->cur_len_ || buf_len < 0) {
+//         real_len = buf->cur_len_;
+//     }
+//     int res = push_back(buf->buf_, real_len);
+//     if (res == 0) {
+//         // TODO 
+//     }
+//     return res;
+// }
 
 size_t libevent_cpp::buffer::pop_front(void* data, size_t data_len) {
     if (cur_len_ < data_len) {

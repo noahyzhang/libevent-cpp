@@ -1,14 +1,18 @@
-cmake_minimum_required(VERSION 3.16.6)
+cmake_minimum_required(VERSION 3.16.3)
 project(libevent_cpp)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(src/)
+include_directories(
+    src
+)
 
+file(GLOB SRCS 
+    src/base/*.cpp
+    src/event/*.cpp
+    src/util/*.cpp
+)
 
-aux_source_directory(src/base BASE_SRC)
-aux_source_directory(src/event EVENT_SRC)
-
-add_executable(libevent_cpp ${BASE_SRC} ${EVENT_SRC})
+add_library(event_cpp SHARED ${SRCS})
 
 add_subdirectory(test)

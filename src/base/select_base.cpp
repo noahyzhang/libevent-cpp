@@ -9,30 +9,30 @@
 
 #define MAX_SELECT_FD_SIZE 1024
 
-bool libevent_cpp::select_base::init() {
+libevent_cpp::select_base::~select_base() {
+    delete event_read_fds_in_;
+    event_read_fds_in_ = nullptr;
+    delete event_write_fds_in_;
+    event_write_fds_in_ = nullptr;
+    delete event_read_fds_out_;
+    event_read_fds_out_ = nullptr;
+    delete event_write_fds_out_;
+    event_write_fds_out_ = nullptr;
+}
+
+int libevent_cpp::select_base::init() {
     event_read_fds_in_ = new fd_set();
     event_write_fds_in_ = new fd_set();
     event_read_fds_out_ = new fd_set();
     event_write_fds_out_ = new fd_set();
-    return true;
+    return 0;
 }
 
-libevent_cpp::select_base::~select_base() {
-    free(event_read_fds_in_);
-    event_read_fds_in_ = nullptr;
-    free(event_write_fds_in_);
-    event_write_fds_in_ = nullptr;
-    free(event_read_fds_out_);
-    event_read_fds_out_ = nullptr;
-    free(event_write_fds_out_);
-    event_write_fds_out_ = nullptr;
-}
-
-bool libevent_cpp::select_base::add(std::shared_ptr<io_event> ev) {
+int libevent_cpp::select_base::add(std::shared_ptr<io_event> ev) {
     // select 系统调用不能超过 1024 个文件描述符
     if (ev->fd_ > MAX_SELECT_FD_SIZE) {
         logger::error("select_base add select fd > MAX_SELECT_FD_SIZE: %d", MAX_SELECT_FD_SIZE);
-        return false;
+        return -1;
     }
     // 如果事件可读，则设置读 fdset 的位 fd
     if (ev->is_event_type_readable()) {
@@ -42,22 +42,22 @@ bool libevent_cpp::select_base::add(std::shared_ptr<io_event> ev) {
     if (ev->is_event_type_writeable()) {
         FD_SET(ev->fd_, event_write_fds_in_);
     }
-    return true;
+    return 0;
 }
 
-bool libevent_cpp::select_base::remove(std::shared_ptr<io_event> ev) {
+int libevent_cpp::select_base::remove(std::shared_ptr<io_event> ev) {
     // 如果事件可读，则清除读 fdset 的位 fd
-    if (!ev->is_event_type_readable()) {
+    if (ev->is_event_type_readable()) {
         FD_CLR(ev->fd_, event_read_fds_in_);
     }
     // 如果事件可写，则清除写 fdset 的位 fd
-    if (!ev->is_event_type_writeable()) {
+    if (ev->is_event_type_writeable()) {
         FD_CLR(ev->fd_, event_write_fds_in_);
     }
-    return true;
+    return 0;
 }
 
-bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
+int libevent_cpp::select_base::dispatch(struct timeval* tv) {
     // 将用户设置好的 fds 拷贝，用于 select 调用
     memcpy(event_read_fds_out_, event_read_fds_in_, sizeof(fd_set));
     memcpy(event_write_fds_out_, event_write_fds_in_, sizeof(fd_set));
@@ -66,10 +66,10 @@ bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
     if (res < 0) {
         if (errno != EINTR) {
             logger::error("select dispatch failed, errno: %d", errno);
-            return false;
+            return -1;
         }
         logger::info("select dispatch receive Interrupted, errno: %d", errno);
-        return true;
+        return 0;
     }
     int readable, writeable;
     // 遍历所有的 fd 对应的 event
@@ -98,5 +98,5 @@ bool libevent_cpp::select_base::dispatch(struct timeval* tv) {
             }
         }
     }
-    return true;
+    return 0;
 }

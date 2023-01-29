@@ -5,14 +5,34 @@ project(libevent_cpp_test)
 SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
 
-include_directories(/data/home/noahyzhang/cplus_project/libevent-cpp/src/)
+include_directories(
+    src
+)
 
-file(GLOB_RECURSE SRC /data/home/noahyzhang/cplus_project/libevent-cpp/src/*.cpp)
+# 测试 IO_EVENT 事件
+file(GLOB IO_EVENT_TEST_SRC
+    sample/io_event_test.cpp
+)
+add_executable(io_event_test ${IO_EVENT_TEST_SRC})
+target_link_libraries(io_event_test 
+    event_cpp
+)
 
-# aux_source_directory(/data/home/noahyzhang/cplus_project/libevent-cpp/src/ SRC)
-# aux_source_directory(/data/home/noahyzhang/cplus_project/libevent-cpp/src/event EVENT_SRC)
-# aux_source_directory(/data/home/noahyzhang/cplus_project/libevent-cpp/src/util/log UTIL_LOG_SRC)
+# 测试 SIGNAL_EVENT 事件
+file(GLOB SIGNAL_EVENT_TEST_SRC
+    sample/signal_event_test.cpp
+)
+add_executable(signal_event_test ${SIGNAL_EVENT_TEST_SRC})
+target_link_libraries(signal_event_test
+    event_cpp
+)
 
-# add_executable(libevent_cpp_test ${BASE_SRC} ${EVENT_SRC} ${UTIL_LOG_SRC} sample/io_event_test.cpp)
-add_executable(libevent_cpp_test ${SRC} sample/io_event_test.cpp)
+# 测试 TIME_EVENT 事件
+file(GLOB TIME_EVENT_TEST_SRC
+    sample/time_event_test.cpp
+)
+add_executable(time_event_test ${TIME_EVENT_TEST_SRC})
+target_link_libraries(time_event_test
+    event_cpp
+)
 

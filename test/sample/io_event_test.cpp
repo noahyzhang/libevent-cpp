@@ -25,9 +25,12 @@ void fifo_read(std::shared_ptr<libevent_cpp::io_event> ev) {
 
 int main() {
     auto event_base = std::make_shared<libevent_cpp::epoll_base>();
-    event_base->init();
-    const char* fifo = "/tmp/event.fifo";
+    if (event_base->init() < 0) {
+        std::cout << "epoll_base init failed" << std::endl;
+        return -1;
+    }
 
+    const char* fifo = "/tmp/event.fifo";
     unlink(fifo);
     if (mkfifo(fifo, 0600) < 0) {
         std::cout << "mkfifo failed" << std::endl;

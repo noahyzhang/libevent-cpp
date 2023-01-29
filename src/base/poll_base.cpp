@@ -5,7 +5,7 @@
 #include "base/poll_base.h"
 #include "util/util_logger.h"
 
-bool libevent_cpp::poll_base::add(std::shared_ptr<io_event> ev) {
+int libevent_cpp::poll_base::add(std::shared_ptr<io_event> ev) {
     struct pollfd* pfd = fd_map_poll_[ev->fd_];
     if (!pfd) {
         pfd = new struct pollfd();
@@ -20,16 +20,16 @@ bool libevent_cpp::poll_base::add(std::shared_ptr<io_event> ev) {
     if (ev->is_event_type_writeable()) {
         pfd->events |= POLLOUT;
     }
-    return true;
+    return 0;
 }
 
-bool libevent_cpp::poll_base::remove(std::shared_ptr<io_event> ev) {
+int libevent_cpp::poll_base::remove(std::shared_ptr<io_event> ev) {
     delete fd_map_poll_[ev->fd_];
     fd_map_poll_.erase(ev->fd_);
-    return true;
+    return 0;
 }
 
-bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
+int libevent_cpp::poll_base::dispatch(struct timeval* tv) {
     int timeout = -1;
     if (tv) {
         // timeout 单位为毫秒。小于 1 毫秒的数值当作 1 毫秒
@@ -45,12 +45,12 @@ bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
     if (res < 0) {
         if (errno != EINTR) {
             logger::error("poll_base::dispatch poll err");
-            return false;
+            return -1;
         }
         // TODO 其他信号来了，需要处理
-        return true;
+        return 0;
     }
-    if (res == 0) return true;  // 如果没有就绪的文件描述符，直接返回
+    if (res == 0) return 0;  // 如果没有就绪的文件描述符，直接返回
     int what = 0;
     for (int i = 0; i < nfds; i++) {
         what = fds[i].revents;
@@ -71,5 +71,5 @@ bool libevent_cpp::poll_base::dispatch(struct timeval* tv) {
             }
         }
     }
-    return true;
+    return 0;
 }

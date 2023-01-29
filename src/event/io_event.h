@@ -8,37 +8,30 @@
 
 namespace libevent_cpp {
 
-enum EVENT_TYPE {
+// IO 事件的类型
+enum IO_EVENT_TYPE {
     NONE = 0,
     READ_ONLY,
     WRITE_ONLY,
     RDWR,
 };
 
+// IO 相关的事件
 class io_event : public event {
- private:
-    bool event_type_read_ = false;  // 事件类型：读事件
-    bool event_type_write_ = false;  // 事件类型：写事件
-    bool read_event_status_active_ = false;  // 读事件的活跃状态
-    bool write_event_status_active_ = false;  // 写事件的活跃状态
-
- public:
-    int fd_ = -1;  // 文件描述符
-    bool is_event_first_add_ = true;  // 事件如果第一次添加，则为 add；后续为 mod
-    int err = -1;
-
  public:
     io_event() = delete;
-    io_event(int fd, EVENT_TYPE type) : fd_(fd) { set_event_type(type); }
+    io_event(int fd, IO_EVENT_TYPE type) : fd_(fd) { set_event_type(type); }
     ~io_event()  {
         if (fd_ > 0) {
             close(fd_);
         }
     }
 
+ public:
+    // 设置文件描述符
     inline void set_fd(size_t fd) { fd_ = fd; }
-
-    inline void set_event_type(EVENT_TYPE type) {
+    // 设置事件的类型
+    inline void set_event_type(IO_EVENT_TYPE type) {
         switch (type) {
         case READ_ONLY:
             event_type_read_ = true;
@@ -74,6 +67,17 @@ class io_event : public event {
     inline bool is_event_type_writeable() const { return event_type_write_; }
     // 如果此事件既不可读，也不可写。则认为这个事件可被删除
     inline bool is_event_type_removeable() const { return !event_type_read_ && !event_type_write_; }
+
+ private:
+    bool event_type_read_ = false;  // 事件类型：读事件
+    bool event_type_write_ = false;  // 事件类型：写事件
+    bool read_event_status_active_ = false;  // 读事件的活跃状态
+    bool write_event_status_active_ = false;  // 写事件的活跃状态
+
+ public:
+    int fd_ = -1;  // 文件描述符
+    bool is_event_first_add_ = true;  // 事件如果第一次添加，则为 add；后续为 mod
+    int err = -1;
 };
 
 }  // namespace libevent_cpp
