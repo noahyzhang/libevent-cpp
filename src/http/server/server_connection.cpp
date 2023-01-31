@@ -5,28 +5,32 @@
 #include "http/server/server_connection.h"
 #include "util/util_logger.h"
 
-void libevent_cpp::read_timeout_cb(http_server_connection* conn) {
-    logger::warn("server connection read timeout, client addr: %s, port: %d",
-        conn->get_client_address(), conn->get_client_port());
-    conn->fail(HTTP_TIMEOUT);
-}
+namespace libevent_cpp {
 
-void libevent_cpp::write_timeout_cb(http_server_connection* conn) {
-    logger::warn("server connection write timeout, client addr: %s, port: %d",
-        conn->get_client_address(), conn->get_client_port());
-    conn->fail(HTTP_TIMEOUT);
-}
-
-libevent_cpp::http_server_connection::http_server_connection(
-    std::shared_ptr<event_base> base, int fd, http_server* server)
-    : http_connection(base, fd), server_(server) {
+http_server_connection::http_server_connection(
+    std::shared_ptr<event_base> base, int fd,
+    std::shared_ptr<std::map<std::string, HandleCallBack>> handle_callbacks)
+    : http_connection(base, fd),
+      handle_callbacks_(handle_callbacks) {
     base->register_callback(read_timer_, read_timeout_cb, this);
     base->register_callback(write_timer_, write_timeout_cb, this);
     // TODO 
     // timeout 
 }
 
-int libevent_cpp::http_server_connection::create_request() {
+void http_server_connection::read_timeout_cb(http_server_connection* conn) {
+    logger::warn("server connection read timeout, client addr: %s, port: %d",
+        conn->get_client_address(), conn->get_client_port());
+    conn->fail(HTTP_TIMEOUT);
+}
+
+void http_server_connection::write_timeout_cb(http_server_connection* conn) {
+    logger::warn("server connection write timeout, client addr: %s, port: %d",
+        conn->get_client_address(), conn->get_client_port());
+    conn->fail(HTTP_TIMEOUT);
+}
+
+int http_server_connection::create_request() {
     auto req = get_empty_request();
     // TODO flag
     req->set_http_request_kind(REQUEST);
@@ -37,14 +41,17 @@ int libevent_cpp::http_server_connection::create_request() {
     return 0;
 }
 
-void libevent_cpp::http_server_connection::handle_request(http_request* req) {
+void http_server_connection::handle_request(http_request* req) {
+    // 先判断请求的 URI 是否正确
     if (req->get_uri().empty()) {
-        req->send_error(HTTP_BADREQUEST, "Bad Request");
+        req->send_error_reply(HTTP_BADREQUEST, "Bad Request");
         logger::error("request uri is empty, handle Bad Requst");
         return;
     }
     logger::info("handle uri: %s", req->get_uri().c_str());
+
     req->set_uri(util_string::string_from_utf8(req->get_uri()));
+    // 对请求进行分割
     size_t offset = req->get_uri().find('?');
     if (offset != std::string::npos) {
         // TODO req->query 
@@ -59,8 +66,13 @@ void libevent_cpp::http_server_connection::handle_request(http_request* req) {
     }
 }
 
-void libevent_cpp::http_server_connection::fail(http_connection_error err) {
+void http_server_connection::fail(http_connection_error err) {
     logger::warn("server connection fail on err: %d, state: %d", err, state_);
+    /**
+     * 对于请求，有两类不同的错误
+     * 1. 网络传输层的错误，比如超时，我们直接丢弃这条连接
+     * 2. HTTP 应用层的错误，我们应该在释放这个连接前回传一个操作
+     */
     switch (err) {
     case HTTP_TIMEOUT:
         close(1);
@@ -70,7 +82,7 @@ void libevent_cpp::http_server_connection::fail(http_connection_error err) {
         return;
     case HTTP_INVALID_HEADER:
     default:
-        auto req = current_request();
+        auto req = get_current_request();
         if (!req) {
             return;
         }
@@ -85,8 +97,8 @@ void libevent_cpp::http_server_connection::fail(http_connection_error err) {
     }
 }
 
-void libevent_cpp::http_server_connection::do_read_done() {
-    auto req = current_request();
+void http_server_connection::do_read_done() {
+    auto req = get_current_request();
     if (!req) {
         return;
     }
@@ -99,8 +111,8 @@ void libevent_cpp::http_server_connection::do_read_done() {
     req->set_handled();
 }
 
-void libevent_cpp::http_server_connection::do_write_done() {
-    auto req = current_request();
+void http_server_connection::do_write_done() {
+    auto req = get_current_request();
     if (!req) {
         return;
     }
@@ -115,3 +127,5 @@ void libevent_cpp::http_server_connection::do_write_done() {
         close(1);
     }
 }
+
+}  // namespace libevent_cpp

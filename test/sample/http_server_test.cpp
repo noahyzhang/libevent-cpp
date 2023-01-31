@@ -1,3 +1,5 @@
+// Copyright 2022 Tencent LLC
+// Author: noahyzhang
 
 #include <memory>
 #include "http/server/server.h"
@@ -6,7 +8,7 @@ void home_page(libevent_cpp::http_request* req) {
     auto buf = std::unique_ptr<libevent_cpp::buffer>(new libevent_cpp::buffer());
     buf->push_back_string("hello, This is home page");
 
-    req->send_reply(HTTP_OK, "Everything is fine.", );
+    req->send_reply(HTTP_OK, "Everything is fine.", req->input_headers_["Empty"].empty() ? std::move(buf) : nullptr);
 }
 
 int main() {

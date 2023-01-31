@@ -71,7 +71,7 @@ void libevent_cpp::http_client_connection::do_read_done() {
 }
 
 void libevent_cpp::http_client_connection::do_write_done() {
-    auto req = current_request();
+    auto req = get_current_request();
     if (!req) {
         return;
     }
@@ -80,7 +80,7 @@ void libevent_cpp::http_client_connection::do_write_done() {
 }
 
 void libevent_cpp::http_client_connection::fail(http_connection_error err) {
-    auto req = current_request();
+    auto req = get_current_request();
     if (!req) {
         return;
     }

@@ -34,7 +34,7 @@ void http_read_cb(libevent_cpp::buffer_event* buf_ev) {
         req->set_http_request_kind(libevent_cpp::RESPONSE);
 
         auto line = buf_ev->get_input_buf()->readline();
-        req->parse_request_line
+        req->parse_request_first_line
     }
 }
 

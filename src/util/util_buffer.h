@@ -14,14 +14,11 @@ namespace libevent_cpp {
 // 单次从文件读取的最大字节数
 #define DEFAULT_ONCE_READ_FILE_MAX_BYTES 4096
 
+/* 
+ * 字符串的内存块
+ * 提供一些操作，用于操作此内存块，比如文件读取、写入文件等等
+ */
 class buffer {
- private:
-    unsigned char* origin_buf_;
-    unsigned char* buf_;
-    size_t total_len_ = 0;
-    size_t cur_len_ = 0;
-    size_t start_index_ = 0;
-
  public:
     buffer() : total_len_(DEFAULT_BUFFER_SIZE) {
         origin_buf_ = new unsigned char[total_len_];
@@ -44,7 +41,7 @@ class buffer {
 
     // 尾插
     int push_back(void* data, size_t data_len);
-    // int push_back_buffer(const std::unique_ptr<buffer>& buf, size_t buf_len);
+    int push_back_buffer(const std::unique_ptr<buffer>& buf, size_t buf_len);
     inline int push_back_string(const std::string& str) {
         return push_back((void*)(str.c_str()), str.size());
     }
@@ -71,6 +68,13 @@ class buffer {
     void remove_front(size_t len);
     // 复位 buffer，将字符数组的前面的已经被删除的部分补齐. [start_index_, start_index_ + cur_len_] => [0, cur_len_]
     void reset_buffer();
+
+ private:
+    unsigned char* origin_buf_;
+    unsigned char* buf_;
+    size_t total_len_ = 0;
+    size_t cur_len_ = 0;
+    size_t start_index_ = 0;
 };
 
 }  // namespace libevent_cpp

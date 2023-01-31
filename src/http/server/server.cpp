@@ -7,6 +7,8 @@
 #include "util/util_network.h"
 
 libevent_cpp::http_server::http_server() {
+    client_info_queue_ = std::make_shared<concurrent_queue<http_client_info>>();
+    handle_callbacks_ = std::make_shared<std::map<std::string, HandleCallBack>>();
     base_ = std::make_shared<libevent_cpp::epoll_base>();
     pool_ = std::make_shared<libevent_cpp::thread_pool>();
 }
@@ -26,7 +28,8 @@ void libevent_cpp::http_server::resize_thread_pool(size_t thread_num) {
     int cur_threads = threads_.size();
     if (cur_threads <= thread_num) {
         for (int i = cur_threads; i < thread_num; i++) {
-            threads_.emplace_back(std::unique_ptr<http_server_thread>(new http_server_thread(this)));
+            threads_.emplace_back(std::unique_ptr<http_server_thread>(
+                new http_server_thread(client_info_queue_, handle_callbacks_)));
         }
     } else {
         threads_.resize(thread_num);
@@ -63,7 +66,7 @@ void libevent_cpp::http_server::listen_cb(int fd, std::shared_ptr<http_server> s
 
     logger::info("http server accept new client with fd: %d, host: %s, port: %d", peer_fd, host.c_str(), port);
 
-    server->client_info_queue_.push(std::unique_ptr<http_client_info>(new http_client_info{peer_fd, host, port}));
+    server->client_info_queue_->push(http_client_info{peer_fd, host, port});
     // 唤醒线程来处理
     server->wakeup_some_thread(2);
 }

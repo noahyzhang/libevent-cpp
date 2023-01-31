@@ -83,7 +83,9 @@ class event_base {
     // 定义定时事件在容器中存放的顺序
     struct cmp_time_event {
         bool operator()(const std::shared_ptr<time_event> tm_ev1, const std::shared_ptr<time_event> tm_ev2) const {
-            return timercmp(&tm_ev1->get_timeout(), &tm_ev2->get_timeout(), <);
+            auto tm1 = tm_ev1->get_timeout();
+            auto tm2 = tm_ev2->get_timeout();
+            return timercmp(&tm1, &tm2, <);
         }
     };
 

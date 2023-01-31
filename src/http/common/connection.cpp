@@ -7,28 +7,39 @@
 #include "http/common/connection.h"
 #include "util/util_logger.h"
 
-libevent_cpp::http_connection::http_connection(
+namespace libevent_cpp {
+
+http_connection::http_connection(
     std::shared_ptr<event_base> base, int fd)
     : buffer_event(base, fd)  {
     state_ = DISCONNECTED;
+    // 注册不同类型的事件
     register_read_cb(handler_read, this);
     register_eof_cb(handler_eof, this);
     register_write_cb(handler_write, this);
     register_error_cb(handler_error, this);
-
+    // 创建定时的读写事件
     read_timer_ = create_event<time_event>();
     write_timer_ = create_event<time_event>();
 }
 
-void libevent_cpp::http_connection::reset() {
+http_connection::~http_connection() {
+    auto ev_base = get_event_base();
+    if (ev_base) {
+        ev_base->remove_event(read_timer_);
+        ev_base->remove_event(write_timer_);
+    }
+}
+
+void http_connection::reset() {
 
 }
 
-void libevent_cpp::http_connection::close(int op) {
+void http_connection::close(int op) {
 
 }
 
-void libevent_cpp::http_connection::start_read() {
+void http_connection::start_read() {
     state_ = READING_FIRSTLINE;
     if (get_input_buf_length() > 0) {
         read_http();
@@ -37,7 +48,7 @@ void libevent_cpp::http_connection::start_read() {
     }
 }
 
-void libevent_cpp::http_connection::start_write() {
+void http_connection::start_write() {
     if (get_output_buf_length() <= 0) {
         return;
     }
@@ -45,7 +56,7 @@ void libevent_cpp::http_connection::start_write() {
     add_write_and_timer();
 }
 
-void libevent_cpp::http_connection::add_read_and_timer() {
+void http_connection::add_read_and_timer() {
     add_read_event();
     if (timeout_ > 0) {
         read_timer_->set_timer(timeout_, 0);
@@ -53,7 +64,7 @@ void libevent_cpp::http_connection::add_read_and_timer() {
     }
 }
 
-void libevent_cpp::http_connection::add_write_and_timer() {
+void http_connection::add_write_and_timer() {
     add_write_event();
     if (timeout_ > 0) {
         write_timer_->set_timer(timeout_, 0);
@@ -61,15 +72,15 @@ void libevent_cpp::http_connection::add_write_and_timer() {
     }
 }
 
-void libevent_cpp::http_connection::remove_read_and_timer() {
+void http_connection::remove_read_and_timer() {
     get_event_base()->remove_event(read_timer_);
 }
 
-void libevent_cpp::http_connection::remove_write_and_timer() {
+void http_connection::remove_write_and_timer() {
     get_event_base()->remove_event(write_timer_);
 }
 
-inline libevent_cpp::http_request* libevent_cpp::http_connection::current_request() {
+inline http_request* http_connection::get_current_request() {
     if (requests_.empty()) {
         logger::warn("no request");
         // TODO 
@@ -79,7 +90,7 @@ inline libevent_cpp::http_request* libevent_cpp::http_connection::current_reques
     return requests_.front().get();
 }
 
-void libevent_cpp::http_connection::pop_request() {
+void http_connection::pop_request() {
     if (requests_.empty()) {
         return;
     }
@@ -92,7 +103,7 @@ void libevent_cpp::http_connection::pop_request() {
     empty_queue_.push(std::move(req));
 }
 
-inline std::unique_ptr<libevent_cpp::http_request> libevent_cpp::http_connection::get_empty_request() {
+inline std::unique_ptr<http_request> http_connection::get_empty_request() {
     if (empty_queue_.empty()) {
         return std::unique_ptr<http_request>(new http_request(this));
     }
@@ -101,7 +112,7 @@ inline std::unique_ptr<libevent_cpp::http_request> libevent_cpp::http_connection
     return req;
 }
 
-void libevent_cpp::http_connection::read_http() {
+void http_connection::read_http() {
     if (is_closed() || requests_.empty()) {
         return;
     }
@@ -128,8 +139,19 @@ void libevent_cpp::http_connection::read_http() {
     }
 }
 
-void read_firstline() {
-
+void http_connection::read_firstline() {
+    auto req = get_current_request();
+    if (!req) return;
+    auto line = input_->readline();
+    enum message_read_status res = req->parse_first_line(line);
+    if (res == DATA_CORRUPTED) {
+        fail(HTTP_INVALID_HEADER);
+        return;
+    } else if (res == MORE_DATA_EXPECTED) {
+        add_read_and_timer();
+        return;
+    }
+    
 }
 
 void read_header() {
@@ -148,18 +170,18 @@ void read_trailer() {
 
 }
 
-void libevent_cpp::http_connection::handler_read(http_connection* conn) {
+void http_connection::handler_read(http_connection* conn) {
     conn->remove_read_and_timer();
     conn->read_http();
 }
 
-void libevent_cpp::http_connection::handler_eof(http_connection* conn) {
+void http_connection::handler_eof(http_connection* conn) {
     if (conn->get_output_buf_length() > 0) {
         conn->start_write();
     }
 }
 
-void libevent_cpp::http_connection::handler_write(http_connection* conn) {
+void http_connection::handler_write(http_connection* conn) {
     conn->remove_write_and_timer();
     if (conn->get_output_buf_length() > 0) {
         conn->add_write_and_timer();
@@ -169,8 +191,10 @@ void libevent_cpp::http_connection::handler_write(http_connection* conn) {
     }
 }
 
-void libevent_cpp::http_connection::handler_error(http_connection* conn) {
+void http_connection::handler_error(http_connection* conn) {
     if (errno == EPIPE || errno == ECONNRESET) {
         conn->
     }
 }
+
+}  // namespace libevent_cpp

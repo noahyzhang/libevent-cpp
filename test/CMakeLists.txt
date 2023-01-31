@@ -36,3 +36,12 @@ target_link_libraries(time_event_test
     event_cpp
 )
 
+# 测试 http_server 功能
+file(GLOB HTTP_SERVER_TEST_SRC
+    sample/http_server_test.cpp
+)
+add_executable(http_server_test ${HTTP_SERVER_TEST_SRC})
+target_link_libraries(http_server_test
+    event_cpp
+)
+

@@ -47,7 +47,7 @@ void libevent_cpp::buffer_event::remove_write_event() {
     get_event_base()->remove_event(ev_);
 }
 
-void libevent_cpp::buffer_event::io_callback(buffer_event* bev) {
+void libevent_cpp::buffer_event::io_callback(std::shared_ptr<buffer_event> bev) {
     int res = 0;
     auto ev = bev->ev_;
     if (ev->is_read_event_active_status()) {

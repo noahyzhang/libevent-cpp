@@ -3,16 +3,15 @@
 
 #include "thread/thread_pool.h"
 
-void libevent_cpp::thread_pool::set_thread(int i) {
-    std::shared_ptr<std::atomic<bool>> flag(flags_[i]);
-    auto f = [this, i, flag]() {
+void libevent_cpp::thread_pool::create_thread(size_t thread_num) {
+    std::shared_ptr<std::atomic<bool>> flag(flags_[thread_num]);
+    auto f = [this, thread_num, flag]() {
         std::atomic<bool>& internal_flag = *flag;
-        std::function<void(int id)>* func;
+        auto func = std::make_shared<std::function<void(int)>>();
         bool is_pop = queue_.pop(func);
         while (true) {
             while (is_pop) {
-                std::unique_ptr<std::function<void(int id)>> f(func);
-                (*f)(i);
+                (*func)(thread_num);
                 if (internal_flag) {
                     return;
                 } else {
@@ -27,17 +26,18 @@ void libevent_cpp::thread_pool::set_thread(int i) {
                 return is_pop || is_done_ || internal_flag;
             });
             --waiting_threads_;
+            // 此时线程需要退出，即 is_done_ 或者 internal_flag 为 true
             if (!is_pop) {
                 return;
             }
         }
     };
-    threads_[i].reset(new std::thread(f));
+    threads_[thread_num].reset(new std::thread(f));
 }
 
-void libevent_cpp::thread_pool::reset_thread_num(int thread_num) {
+void libevent_cpp::thread_pool::reset_thread_num(size_t thread_num) {
     if (!is_stop_ && !is_done_) {
-        int old_thread_num = static_cast<int>(threads_.size());
+        size_t old_thread_num = threads_.size();
         // 如果新的线程数等于原来的线程数，不需要扩缩容
         if (old_thread_num == thread_num) {
             return;
@@ -46,17 +46,19 @@ void libevent_cpp::thread_pool::reset_thread_num(int thread_num) {
             threads_.resize(thread_num);
             flags_.resize(thread_num);
             // 设置扩容的那几个线程
-            for (int i = old_thread_num; i < thread_num; i++) {
+            for (size_t i = old_thread_num; i < thread_num; i++) {
+                // 新设置的线程的 flag 设置为 false，即可以处理任务
                 flags_[i] = std::make_shared<std::atomic<bool>>(false);
-                set_thread(i);
+                create_thread(i);
             }
         } else {
             // 缩容的情况，把将要被缩掉的线程设置 flag，使其退出
-            for (int i = old_thread_num -1; i >= thread_num; --i) {
+            for (size_t i = old_thread_num -1; i >= thread_num; --i) {
                 *flags_[i] = true;
                 threads_[i]->detach();
             }
             {
+                // 通知所有线程，退出那些要被缩容掉的线程
                 std::unique_lock<std::mutex> lock(mutex_);
                 cv_.notify_all();
             }
@@ -67,25 +69,19 @@ void libevent_cpp::thread_pool::reset_thread_num(int thread_num) {
 }
 
 void libevent_cpp::thread_pool::clear_queue() {
-    std::function<void(int id)>* func;
-    while (queue_.pop(func)) {
-        delete func;
-    }
+    auto func = std::make_shared<std::function<void(int)>>();
+    while (queue_.pop(func)) {}
 }
 
-std::function<void(int)> libevent_cpp::thread_pool::pop() {
-    std::function<void(int id)>* func = nullptr;
+const std::shared_ptr<std::function<void(int)>> libevent_cpp::thread_pool::pop() {
+    auto func = std::make_shared<std::function<void(int)>>();
     queue_.pop(func);
-    // 在返回时，即使发生异常也要释放此 func
-    std::unique_ptr<std::function<void(int id)>> tmp_func(func);
-    std::function<void(int)> res;
-    if (func) {
-        res = *func;
-    }
-    return res;
+    return func;
 }
 
 void libevent_cpp::thread_pool::stop(bool is_wait = false) {
+    // 1. 如果设置为不等待，则直接清空队列中的所有任务
+    // 2. 如果设置为等待，则等待线程执行完队列中的所有任务之后再退出
     if (!is_wait) {
         if (is_stop_) {
             return;
@@ -101,6 +97,7 @@ void libevent_cpp::thread_pool::stop(bool is_wait = false) {
         }
         is_done_ = true;
     }
+    // 这里通知所有线程退出，并且对线程进行回收
     {
         std::unique_lock<std::mutex> lock(mutex_);
         cv_.notify_all();
@@ -110,6 +107,7 @@ void libevent_cpp::thread_pool::stop(bool is_wait = false) {
             threads_[i]->join();
         }
     }
+    // 存在队列中的元素未处理玩的情况，这里再次清空，以防内存泄漏
     clear_queue();
     threads_.clear();
     flags_.clear();
