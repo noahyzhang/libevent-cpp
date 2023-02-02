@@ -21,6 +21,9 @@ class util_string {
     // 分割字符串
     static std::vector<std::string> split_string(const std::string& str, char delimiter);
 
+    // 判断字符串中是否有回车/换行符
+    static bool has_crlf(const std::string& str);
+
  private:
     // 十六进制的字符转换为整数
     static int hex_to_int(char ch);

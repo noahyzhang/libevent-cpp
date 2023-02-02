@@ -83,4 +83,13 @@ std::vector<std::string> util_string::split_string(const std::string& str, char 
     return tokens;
 }
 
+bool util_string::has_crlf(const std::string& str) {
+    auto p = str.c_str();
+    while (*p) {
+        if (*p == '\r' || *p == '\n') return true;
+        p++;
+    }
+    return false;
+}
+
 }  // namespace libevent_cpp

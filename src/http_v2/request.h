@@ -4,11 +4,29 @@
 #pragma once
 
 #include <string>
+#include 
 #include "common.h"
 
 namespace libevent_cpp {
 
-class Request {
+class http_request {
+public:
+
+    inline void set_request_method(const std::string& method) {
+        method_ = method;
+    }
+    inline void set_request_path(const std::string& path) {
+        path_ = path;
+    }
+    inline void set_request_header(const std::string& key, const std::string& value) {
+        headers_.emplace(key, value);
+    }
+    inline void set_request_body(const std::string& body) {
+        body_ = body;
+    }
+    inline void set_client_result_cb(http_client_result_cb cb) {
+        client_result_cb_ = cb;
+    }
 
 
 private:
@@ -30,7 +48,8 @@ private:
     // 本地的端口
     uint16_t local_port_;
 
-
+    // http 客户端请求答复的回调函数
+    http_client_result_cb client_result_cb_ = nullptr;
 };
 
 }  // namespace libevent_cpp

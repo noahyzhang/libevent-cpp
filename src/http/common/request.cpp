@@ -9,7 +9,7 @@ namespace libevent_cpp {
 
 http_request::http_request(http_connection* conn)
     : conn_(conn) {
-    kind_ = RESPONSE;  // 默认是 response
+    kind_ = RESPONSE;  // 默认是 http_response
     input_buffer_ = std::unique_ptr<buffer>(new buffer());
     output_buffer_ = std::unique_ptr<buffer>(new buffer());
 }
@@ -140,7 +140,7 @@ int http_request::parse_response_first_line(const std::string& line) {
     // http 响应的第一行是状态行，应该为: http-version status-code reason-phrase CRLF
     std::vector<std::string> tokens = util_string::split_string(line, ' ');
     if (tokens.size() < 3) {
-        logger::error("bad http response status line: %s", line);
+        logger::error("bad http http_response status line: %s", line);
         return -1;
     }
     std::string version = tokens[0];
@@ -154,7 +154,7 @@ int http_request::parse_response_first_line(const std::string& line) {
         http_major_version_ = 1;
         http_minor_version_ = 1;
     } else {
-        logger::error("bad http response version: %s on response: %s", version, remote_host_);
+        logger::error("bad http http_response version: %s on http_response: %s", version, remote_host_);
         return -2;
     }
     // 获取状态码和状态理由
