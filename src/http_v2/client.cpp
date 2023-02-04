@@ -11,6 +11,23 @@ http_client::http_client(const std::string& host, uint16_t port)
     http_connection_ = std::make_shared<http_connection>(event_manager_, host, port);
 }
 
+http_client_result http_client::Get(const std::string& path) {
+    return Get(path, Headers(), Progress());
+}
+
+http_client_result http_client::Get(const std::string& path, const Headers& headers) {
+    return Get(path, headers, Progress());
+}
+
+http_client_result http_client::Get(const std::string& path, const Headers& headers, Progress progress) {
+    http_request req;
+    req.set_request_method("GET");
+    req.set_request_path(path);
+    req.set_request_headers(headers);
+    req.set_request_progress(std::move(progress));
+    
+}
+
 void http_client::GetAsync(const std::string& path, http_client_result_cb cb) {
     std::unique_ptr<http_request> req(new http_request());
     req->set_request_method("GET");

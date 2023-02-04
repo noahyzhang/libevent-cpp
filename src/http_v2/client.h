@@ -24,9 +24,25 @@ public:
           request_headers_(std::move(request_headers)) {}
 
     // http_response
-    int get_status_code() const { return res_->get_status_code(); }
-
-
+    // 获取 http 版本
+    inline std::string get_http_version() const { res_->get_http_version(); }
+    // 获取状态码
+    inline int get_status_code() const { return res_->get_status_code(); }
+    // 获取状态的文本
+    inline std::string get_status_reason() const { return res_->get_status_reason(); }
+    // 获取单个头部
+    inline std::string get_single_header(const std::string& key) const {
+        auto headers = res_->get_headers();
+        auto iter = headers.find(key);
+        if (iter != headers.end()) {
+            return iter->second;
+        }
+        return "";
+    }
+    // 获取所有头部
+    inline Headers get_headers() const { return res_->get_headers(); }
+    // 获取正文
+    inline std::string get_body() const { return res_->get_body(); }
 
 private:
     std::unique_ptr<http_response> res_;
@@ -40,6 +56,7 @@ public:
 public:
     http_client_result Get(const std::string& path);
     http_client_result Get(const std::string& path, const Headers& headers);
+    http_client_result Get(const std::string& path, const Headers& headers, Progress progress);
     void GetAsync(const std::string& path, http_client_result_cb cb);
 
     http_client_result Head(const std::string& path);
@@ -58,7 +75,7 @@ private:
     // 异步接口，事件管理模块开始调度
     void event_manager_dispatch();
 
-    bool send_internal(http_request& req, http_response& res);
+    bool sync_send_internal(const http_request& req, const http_response& res);
 
 
 private:

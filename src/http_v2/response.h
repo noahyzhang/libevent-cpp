@@ -32,7 +32,7 @@ public:
     int parse_response_first_line(const std::string& data);
     int parse_response_header(const std::string& data);
 
-private:
+public:
     // http 的版本
     std::string version_;
     // 状态码
