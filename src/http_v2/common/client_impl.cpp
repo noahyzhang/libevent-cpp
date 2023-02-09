@@ -40,8 +40,8 @@ int http_client_impl::sync_send_internal(http_request* req, http_response* resp,
 
     // 在请求头中插入默认的头部
     for (const auto& header : default_headers_) {
-        if (req->headers_.find(header.first) == req->headers_.end()) {
-            req->headers_.insert(header);
+        if (req->request_headers_.find(header.first) == req->request_headers_.end()) {
+            req->request_headers_.insert(header);
         }
     }
     // 处理请求
@@ -74,7 +74,7 @@ int http_client_impl::sync_send_internal(http_request* req, http_response* resp,
 
 int http_client_impl::process_request(Stream* stream, const http_request& req,
     http_response* resp, bool close_connection, HttpError* err) {
-    if (req.path_.empty()) {
+    if (req.request_path_.empty()) {
         *err = HttpError::Connection;
         return -1;
     }
@@ -83,7 +83,7 @@ int http_client_impl::process_request(Stream* stream, const http_request& req,
     // 不是 ssl 连接，并且代理不为空
     if (!is_ssl() && !proxy_host_.empty() && proxy_port_ != -1) {
         auto req2 = req;
-        req2.path_ = "http://" + host_and_port_ + req.path_;
+        req2.request_path_ = "http://" + host_and_port_ + req.request_path_;
     } else {
         // 
     }
@@ -101,6 +101,7 @@ int http_client_impl::process_request(Stream* stream, const http_request& req,
 
 }
 
+/*
 void http_client_impl::makeup_request_header(std::shared_ptr<http_request> req, bool close_connection) {
     // 如果需要关闭连接
     if (close_connection) {
@@ -175,6 +176,7 @@ void http_client_impl::makeup_request_header(std::shared_ptr<http_request> req, 
         }
     }
 }
+*/
 
 int http_client_impl::write_request_to_stream(
     std::shared_ptr<Stream> stream, const http_request& req, std::shared_ptr<HttpError> err) {

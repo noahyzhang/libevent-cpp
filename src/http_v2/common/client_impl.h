@@ -73,8 +73,8 @@ private:
     // 处理请求
     int process_request(Stream* stream, const http_request& req,
         http_response* resp, bool close_connection, HttpError* err);
-    // 构造请求头
-    void makeup_request_header(http_request* req, bool close_connection);
+    // // 构造请求头
+    // void makeup_request_header(http_request* req, bool close_connection);
     // 将请求写入流中（相当于发送）
     int write_request_to_stream(Stream* stream,
         const http_request& req, HttpError* err);
@@ -126,9 +126,9 @@ private:
   time_t write_timeout_sec_ = CPPHTTPLIB_WRITE_TIMEOUT_SECOND;
   time_t write_timeout_usec_ = CPPHTTPLIB_WRITE_TIMEOUT_USECOND;
 
-  std::string basic_auth_username_;
-  std::string basic_auth_password_;
-  std::string bearer_token_auth_token_;
+  // std::string basic_auth_username_;
+  // std::string basic_auth_password_;
+  // std::string bearer_token_auth_token_;
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
   std::string digest_auth_username_;
   std::string digest_auth_password_;
@@ -151,9 +151,9 @@ private:
   std::string proxy_host_;
   int proxy_port_ = -1;
 
-  std::string proxy_basic_auth_username_;
-  std::string proxy_basic_auth_password_;
-  std::string proxy_bearer_token_auth_token_;
+  // std::string proxy_basic_auth_username_;
+  // std::string proxy_basic_auth_password_;
+  // std::string proxy_bearer_token_auth_token_;
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
   std::string proxy_digest_auth_username_;
   std::string proxy_digest_auth_password_;
