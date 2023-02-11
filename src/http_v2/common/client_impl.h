@@ -71,7 +71,7 @@ private:
     int sync_send_internal(http_request* req, http_response* resp, HttpError* error);
 
     // 处理请求
-    int process_request(Stream* stream, const http_request& req,
+    int handle_request(const http_request& req,
         http_response* resp, bool close_connection, HttpError* err);
     // // 构造请求头
     // void makeup_request_header(http_request* req, bool close_connection);
@@ -83,93 +83,93 @@ private:
     virtual bool is_ssl() const;
 
 private:
-    void shutdown_ssl(Socket&, bool);
-    void shutdown_socket(Socket& socket);
-    void close_socket(Socket& socket);
+    void shutdown_ssl(wrap_socket&, bool);
+    void shutdown_socket(wrap_socket& socket);
+    void close_socket(wrap_socket& socket);
 
 private:
-    struct Socket {
+    struct wrap_socket {
         int socket = -1;
         SSL* ssl = nullptr;
         bool is_open() const { return socket != -1; }
     };
 
-  // Socket endoint information
-  const std::string host_;
-  const int port_;
-  const std::string host_and_port_;
+    // Socket endoint information
+    // const std::string host_;
+    // const int port_;
+    // const std::string host_and_port_;
 
-  // Current open socket
-  struct Socket socket_;
-  mutable std::mutex socket_mutex_;
-  std::recursive_mutex request_mutex_;
+    // Current open socket
+    // 本地的 socket
+    struct wrap_socket socket_;
+    // 用于请求的锁，用于同步 request
+    std::recursive_mutex request_mutex_;
 
-  // These are all protected under socket_mutex
-  size_t socket_requests_in_flight_ = 0;
-  std::thread::id socket_requests_are_from_thread_ = std::thread::id();
-  bool socket_should_be_closed_when_request_is_done_ = false;
+    // 用于 socket 的锁，用于同步 socket
+    mutable std::mutex socket_mutex_;
+    // 标记使用 socket 的个数。被 socket_mutex 保护
+    size_t socket_requests_in_flight_ = 0;
+    // 存储当前 socket 是来自那个线程。被 socket_mutex 保护
+    std::thread::id socket_requests_are_from_thread_ = std::thread::id();
+    // 请求结束时，socket 是否关闭。被 socket_mutex 保护
+    bool socket_should_be_closed_when_request_is_done_ = false;
 
-  // Hostname-IP map
-  std::map<std::string, std::string> addr_map_;
+    // Hostname-IP map
+    // std::map<std::string, std::string> addr_map_;
 
-  // Default headers
-  Headers default_headers_;
+    // 默认的 http 头部
+    Headers default_headers_;
 
-  // Settings
-  std::string client_cert_path_;
-  std::string client_key_path_;
+    // Settings
+    // std::string client_cert_path_;
+    // std::string client_key_path_;
 
-  time_t connection_timeout_sec_ = CPPHTTPLIB_CONNECTION_TIMEOUT_SECOND;
-  time_t connection_timeout_usec_ = CPPHTTPLIB_CONNECTION_TIMEOUT_USECOND;
-  time_t read_timeout_sec_ = CPPHTTPLIB_READ_TIMEOUT_SECOND;
-  time_t read_timeout_usec_ = CPPHTTPLIB_READ_TIMEOUT_USECOND;
-  time_t write_timeout_sec_ = CPPHTTPLIB_WRITE_TIMEOUT_SECOND;
-  time_t write_timeout_usec_ = CPPHTTPLIB_WRITE_TIMEOUT_USECOND;
+    // 关于连接的超时
+    time_t connection_timeout_sec_ = CPPHTTPLIB_CONNECTION_TIMEOUT_SECOND;
+    time_t connection_timeout_usec_ = CPPHTTPLIB_CONNECTION_TIMEOUT_USECOND;
+    // 
+    time_t read_timeout_sec_ = CPPHTTPLIB_READ_TIMEOUT_SECOND;
+    time_t read_timeout_usec_ = CPPHTTPLIB_READ_TIMEOUT_USECOND;
+    time_t write_timeout_sec_ = CPPHTTPLIB_WRITE_TIMEOUT_SECOND;
+    time_t write_timeout_usec_ = CPPHTTPLIB_WRITE_TIMEOUT_USECOND;
 
-  // std::string basic_auth_username_;
-  // std::string basic_auth_password_;
-  // std::string bearer_token_auth_token_;
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  std::string digest_auth_username_;
-  std::string digest_auth_password_;
-#endif
+    // std::string basic_auth_username_;
+    // std::string basic_auth_password_;
+    // std::string bearer_token_auth_token_;
 
-  bool keep_alive_ = false;
-  bool follow_location_ = false;
+    std::string digest_auth_username_;
+    std::string digest_auth_password_;
 
-  bool url_encode_ = true;
+    bool keep_alive_ = false;
+    bool follow_location_ = false;
 
-  int address_family_ = AF_UNSPEC;
-  bool tcp_nodelay_ = CPPHTTPLIB_TCP_NODELAY;
-  SocketOptions socket_options_ = nullptr;
+    bool url_encode_ = true;
 
-  bool compress_ = false;
-  bool decompress_ = true;
+    int address_family_ = AF_UNSPEC;
+    bool tcp_nodelay_ = CPPHTTPLIB_TCP_NODELAY;
+    SocketOptions socket_options_ = nullptr;
 
-  std::string interface_;
+    bool compress_ = false;
+    bool decompress_ = true;
 
-  std::string proxy_host_;
-  int proxy_port_ = -1;
+    std::string interface_;
 
-  // std::string proxy_basic_auth_username_;
-  // std::string proxy_basic_auth_password_;
-  // std::string proxy_bearer_token_auth_token_;
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  std::string proxy_digest_auth_username_;
-  std::string proxy_digest_auth_password_;
-#endif
+    std::string proxy_host_;
+    int proxy_port_ = -1;
 
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  std::string ca_cert_file_path_;
-  std::string ca_cert_dir_path_;
+    // std::string proxy_basic_auth_username_;
+    // std::string proxy_basic_auth_password_;
+    // std::string proxy_bearer_token_auth_token_;
 
-  X509_STORE *ca_cert_store_ = nullptr;
-#endif
+    std::string proxy_digest_auth_username_;
+    std::string proxy_digest_auth_password_;
 
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  bool server_certificate_verification_ = true;
-#endif
+    std::string ca_cert_file_path_;
+    std::string ca_cert_dir_path_;
 
+    X509_STORE *ca_cert_store_ = nullptr;
+
+    bool server_certificate_verification_ = true;
 };
 
 }  // namespace libevent_cpp
