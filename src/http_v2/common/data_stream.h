@@ -124,6 +124,8 @@ ssize_t write_request_headers_to_stream(std::shared_ptr<Stream> stream, const He
 bool write_request_data_to_stream(std::shared_ptr<Stream> stream, const char* ptr, size_t size);
 // bool write_content(Stream& stream, const ContentProvider& content_provider, size_t offset, size_t length, )
 
+// 从 stream 中读取响应的一行数据
+std::string read_response_line_data_from_stream(std::shared_ptr<Stream> stream);
 
 }  // namespace libevent_cpp
 

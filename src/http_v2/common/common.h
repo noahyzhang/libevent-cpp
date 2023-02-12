@@ -22,7 +22,7 @@ using Progress = std::function<bool(uint64_t, uint64_t)>;
 // 错误的 socket
 #define INVALID_SOCKET (-1)
 
-enum class HttpError {
+enum HttpError {
     Success = 0,
     Unknown,
     Connection,

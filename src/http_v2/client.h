@@ -14,68 +14,33 @@
 #include "response.h"
 #include "request.h"
 #include "connection.h"
+#include "http_v2/common/client_impl.h"
 
 namespace libevent_cpp {
 
-class http_client_result {
+class http_client : public http_client_impl {
 public:
-    explicit http_client_result(std::unique_ptr<http_response>&& res, Headers&& request_headers = Headers{})
-        : res_(std::move(res)),
-          request_headers_(std::move(request_headers)) {}
-
-    // http_response
-    // 获取 http 版本
-    inline std::string get_http_version() const { res_->get_http_version(); }
-    // 获取状态码
-    inline int get_status_code() const { return res_->get_status_code(); }
-    // 获取状态的文本
-    inline std::string get_status_reason() const { return res_->get_status_reason(); }
-    // 获取单个头部
-    inline std::string get_single_header(const std::string& key) const {
-        auto headers = res_->get_headers();
-        auto iter = headers.find(key);
-        if (iter != headers.end()) {
-            return iter->second;
-        }
-        return "";
-    }
-    // 获取所有头部
-    inline Headers get_headers() const { return res_->get_headers(); }
-    // 获取正文
-    inline std::string get_body() const { return res_->get_body(); }
-
-private:
-    std::unique_ptr<http_response> res_;
-    Headers request_headers_;
-};
-
-class http_client {
-public:
-    http_client(const std::string& host, uint16_t port);
+    explicit http_client(const std::string& host);
+    explicit http_client(const std::string& host, uint16_t port);
+    explicit http_client(const std::string& host, uint16_t port,
+        const std::string& client_cert_path, const std::string& client_key_path);
+    explicit http_client(const std::string& host, uint16_t port, X509* client_cert, EVP_PKEY* client_key);
+    ~http_client() override;
 
 public:
-    http_client_result Get(const std::string& path);
-    http_client_result Get(const std::string& path, const Headers& headers);
-    http_client_result Get(const std::string& path, const Headers& headers, Progress progress);
-    void GetAsync(const std::string& path, http_client_result_cb cb);
+    void set_ca_cert_store(X509_STORE* ca_cert_store);
+    // 设置连接超时
+    void set_connection_timeout(time_t sec, time_t usec = 0);
+    // 设置读超时
+    void set_read_timeout(time_t sec, time_t usec = 0);
+    // 设置写超时
+    void set_write_timeout(time_t sec, time_t usec = 0);
 
-    http_client_result Head(const std::string& path);
-    http_client_result Head(const std::string& path, const Headers& headers);
+// private:
+//     // 异步接口，事件管理模块开始调度
+//     void event_manager_dispatch();
 
-    http_client_result Post(const std::string& path);
-    http_client_result Post(const std::string& path, const Headers& headers);
-
-    http_client_result Put(const std::string& path);
-
-    http_client_result Patch(const std::string& path);
-
-    http_client_result Delete(const std::string& path);
-
-private:
-    // 异步接口，事件管理模块开始调度
-    void event_manager_dispatch();
-
-    bool sync_send_internal(const http_request& req, const http_response& res);
+//     bool sync_send_internal(const http_request& req, const http_response& res);
 
 
 private:
@@ -85,8 +50,8 @@ private:
     std::shared_ptr<http_connection> http_connection_ = nullptr;
 
     // 远端 server 的地址信息
-    const std::string server_host_;
-    const int server_port_;
+    std::string server_host_;
+    int server_port_;
     // const std::string server_host_and_port_;
 
     // // 当前打开的 socket
@@ -105,6 +70,9 @@ private:
 
     // Headers default_headers_;
 
+    SSL_CTX* ctx_;
+    std::mutex ctx_mutex_;
+    std::once_flag initialize_cert_;
 };
 
 }  // namespace libevent_cpp

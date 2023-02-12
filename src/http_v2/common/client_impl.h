@@ -13,14 +13,15 @@
 #include "http_v2/request.h"
 #include "http_v2/response.h"
 #include "http_v2/common/common.h"
+#include "http_v2/common/data_stream.h"
 
 namespace libevent_cpp {
 
 class http_client_result {
 public:
-    explicit http_client_result(std::unique_ptr<http_response>&& res, Headers&& request_headers = Headers{})
-        : res_(std::move(res)),
-          request_headers_(std::move(request_headers)) {}
+    explicit http_client_result(std::shared_ptr<http_response> res, HttpError err)
+        : res_(res),
+          err_(err) {}
 
     // http_response
     // 获取 http 版本
@@ -42,18 +43,26 @@ public:
     inline Headers get_headers() const { return res_->get_headers(); }
     // 获取正文
     inline std::string get_body() const { return res_->get_body(); }
+    // 获取错误信息
+    inline HttpError get_err() const { return err_; }
 
 private:
-    std::unique_ptr<http_response> res_;
-    Headers request_headers_;
+    std::shared_ptr<http_response> res_;
+    HttpError err_;
 };
 
 class http_client_impl {
 public:
+    explicit http_client_impl(const std::string& host);
+    explicit http_client_impl(const std::string& host, uint16_t port);
+    explicit http_client_impl(const std::string& host, uint16_t port,
+        const std::string& client_cert_path, const std::string& client_key_path);
+    virtual ~http_client_impl();
 
+public:
     http_client_result Get(const std::string& path);
     http_client_result Get(const std::string& path, const Headers& headers);
-    http_client_result Get(const std::string& path, const Headers& headers, Progress progress);
+    // http_client_result Get(const std::string& path, const Headers& headers, Progress progress);
 
     http_client_result Head(const std::string& path);
     http_client_result Head(const std::string& path, const Headers& headers);
@@ -68,24 +77,26 @@ public:
     http_client_result Delete(const std::string& path);
 
 private:
-    int sync_send_internal(http_request* req, http_response* resp, HttpError* error);
-
+    // 发送 http 请求
+    http_client_result sync_send(std::shared_ptr<http_request> req);
+    int sync_send_internal(std::shared_ptr<http_request> req,
+        std::shared_ptr<http_response> resp, std::shared_ptr<HttpError> err);
     // 处理请求
-    int handle_request(const http_request& req,
-        http_response* resp, bool close_connection, HttpError* err);
+    int handle_request(std::shared_ptr<http_request> req, std::shared_ptr<http_response> resp,
+        bool close_connection, std::shared_ptr<HttpError> err);
+    int process_request(std::shared_ptr<Stream> stream, std::shared_ptr<http_request> req,
+        std::shared_ptr<http_response> resp, bool close_connection, std::shared_ptr<HttpError> err);
     // // 构造请求头
     // void makeup_request_header(http_request* req, bool close_connection);
     // 将请求写入流中（相当于发送）
-    int write_request_to_stream(Stream* stream,
-        const http_request& req, HttpError* err);
+    // int write_request_to_stream(Stream* stream,
+    //     const http_request& req, HttpError* err);
+
+    int http_redirect(std::shared_ptr<http_request> req, std::shared_ptr<http_response> resp,
+        std::shared_ptr<HttpError> err);
 
 private:
     virtual bool is_ssl() const;
-
-private:
-    void shutdown_ssl(wrap_socket&, bool);
-    void shutdown_socket(wrap_socket& socket);
-    void close_socket(wrap_socket& socket);
 
 private:
     struct wrap_socket {
@@ -94,12 +105,19 @@ private:
         bool is_open() const { return socket != -1; }
     };
 
-    // Socket endoint information
-    // const std::string host_;
-    // const int port_;
-    // const std::string host_and_port_;
+private:
+    void shutdown_ssl(wrap_socket&, bool);
+    void shutdown_socket(wrap_socket& socket);
+    void close_socket(wrap_socket& socket);
 
-    // Current open socket
+private:
+    // 服务端的主机
+    // const std::string remote_host_;
+    // // 服务端的端口
+    // const int remote_port_;
+    // 服务端的主机和端口
+    const std::string remote_host_and_port_;
+
     // 本地的 socket
     struct wrap_socket socket_;
     // 用于请求的锁，用于同步 request
@@ -124,12 +142,13 @@ private:
     // std::string client_cert_path_;
     // std::string client_key_path_;
 
-    // 关于连接的超时
+    // 关于连接的超时时间
     time_t connection_timeout_sec_ = CPPHTTPLIB_CONNECTION_TIMEOUT_SECOND;
     time_t connection_timeout_usec_ = CPPHTTPLIB_CONNECTION_TIMEOUT_USECOND;
-    // 
+    // 读超时时间
     time_t read_timeout_sec_ = CPPHTTPLIB_READ_TIMEOUT_SECOND;
     time_t read_timeout_usec_ = CPPHTTPLIB_READ_TIMEOUT_USECOND;
+    // 写超时时间
     time_t write_timeout_sec_ = CPPHTTPLIB_WRITE_TIMEOUT_SECOND;
     time_t write_timeout_usec_ = CPPHTTPLIB_WRITE_TIMEOUT_USECOND;
 
@@ -143,16 +162,16 @@ private:
     bool keep_alive_ = false;
     bool follow_location_ = false;
 
-    bool url_encode_ = true;
+    // bool url_encode_ = true;
 
-    int address_family_ = AF_UNSPEC;
-    bool tcp_nodelay_ = CPPHTTPLIB_TCP_NODELAY;
-    SocketOptions socket_options_ = nullptr;
+    // int address_family_ = AF_UNSPEC;
+    // bool tcp_nodelay_ = CPPHTTPLIB_TCP_NODELAY;
+    // SocketOptions socket_options_ = nullptr;
 
-    bool compress_ = false;
-    bool decompress_ = true;
+    // bool compress_ = false;
+    // bool decompress_ = true;
 
-    std::string interface_;
+    // std::string interface_;
 
     std::string proxy_host_;
     int proxy_port_ = -1;

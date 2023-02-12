@@ -1,11 +1,34 @@
+#include <regex>
 #include "http_v2/common/util_network.h"
 #include "http_v2/common/util_algorithm.h"
-#include "http_v2/common/data_stream.h"
 #include "http_v2/common/client_impl.h"
 
 namespace libevent_cpp {
 
-int http_client_impl::sync_send_internal(http_request* req, http_response* resp, HttpError* err) {
+http_client_result http_client_impl::Get(const std::string& path) {
+    return Get(path, Headers());
+}
+
+http_client_result http_client_impl::Get(const std::string& path, const Headers& headers) {
+    // 构造 http 请求
+    auto req = std::make_shared<http_request>();
+    req->set_request_method("GET");
+    req->set_request_path(path);
+    req->set_request_headers(headers);
+    return sync_send(req);
+}
+
+http_client_result http_client_impl::sync_send(std::shared_ptr<http_request> req) {
+    // 构造 http 响应
+    auto resp = std::make_shared<http_response>();
+    auto err = std::make_shared<HttpError>();
+    *err = HttpError::Success;
+    auto res = sync_send_internal(req, resp, err);
+    return http_client_result{resp, *err};
+}
+
+int http_client_impl::sync_send_internal(std::shared_ptr<http_request> req,
+    std::shared_ptr<http_response> resp, std::shared_ptr<HttpError> err) {
     // 处理的是同步的请求，因此加锁保证请求是同步的
     std::lock_guard<std::recursive_mutex> request_mutex_guard(request_mutex_);
     {
@@ -32,7 +55,7 @@ int http_client_impl::sync_send_internal(http_request* req, http_response* resp,
             }
             // 如果是 ssl 连接
             if (is_ssl()) {
-
+                // TODO 这里处理 ssl 连接
             }
         }
         // 将此套接字标记为正在使用，以便此请求正在进行时，任何人都不能关闭它，即使我们将释放互斥锁
@@ -51,7 +74,7 @@ int http_client_impl::sync_send_internal(http_request* req, http_response* resp,
     // 处理请求
     // 如果不是长连接，则需要关闭此连接
     auto close_connection = !keep_alive_;
-    int res = handle_request(*req, resp, close_connection, err);
+    int res = handle_request(req, resp, close_connection, err);
     // 请求结束，进行标记
     {
         std::lock_guard<std::mutex> guard(socket_mutex_);
@@ -67,56 +90,60 @@ int http_client_impl::sync_send_internal(http_request* req, http_response* resp,
     }
     // 返回
     if (!res) {
-        if (err == HttpError::Success) {
-            err = HttpError::Unknown;
+        if (*err == HttpError::Success) {
+            *err = HttpError::Unknown;
         }
     }
     return res;
 }
 
-int http_client_impl::handle_request(const http_request& req,
-    http_response* resp, bool close_connection, HttpError* err) {
+int http_client_impl::handle_request(std::shared_ptr<http_request> req,
+    std::shared_ptr<http_response> resp, bool close_connection, std::shared_ptr<HttpError> err) {
     // 数据流
     auto stream = std::make_shared<SocketStream>(socket_.socket, read_timeout_sec_,
         read_timeout_usec_, write_timeout_sec_, write_timeout_usec_);
     // 请求路径为空，直接返回
-    if (req.request_path_.empty()) {
+    if (req->request_path_.empty()) {
         *err = HttpError::Connection;
         return -1;
     }
-    auto req_save = req;
-    bool res = false;
+    // 这里拷贝一份 http_request，用于后面判断是否需要做重定向等其他逻辑
+    http_request req_save = *req;
+    int res = 0;
     // 不是 ssl 连接，并且代理不为空
-    if (!is_ssl() && !proxy_host_.empty() && proxy_port_ != -1) {
-        auto req2 = req;
-        req2.request_path_ = "http://" + host_and_port_ + req.request_path_;
-        res = process_request(stream, req2, res, close_connection, err);
-        req = req2;
-        req.request_path_ = req_save.request_path_;
-    } else {
-        // 
-        res = process_request(stream, req, resp, close_connection, err);
-    }
-    if (!res) {
+    // if (!is_ssl() && !proxy_host_.empty() && proxy_port_ != -1) {
+    //     http_request req2 = *req;
+    //     req2.request_path_ = "http://" + remote_host_and_port_ + req->request_path_;
+    //     res = process_request(stream, req2, resp, close_connection, err);
+    //     req = req2;
+    //     req->request_path_ = req_save.request_path_;
+    // } else {
+    //     // TODO
+    //     res = process_request(stream, req, resp, close_connection, err);
+    // }
+    res = process_request(stream, req, resp, close_connection, err);
+    if (res < 0) {
         return -2;
     }
+    // 3** 重定向，需要进一步的操作以完成请求
     if (resp->status_code_ > 300 && resp->status_code_ < 400 && follow_location_) {
-        req = req_save;
-        res = redirect();
+        *req = req_save;
+        res = http_redirect(req, resp, err);
     }
-    if ((resp->status_code_ == 401 || resp->status_code_ == 407) && req.authorization_count_ < 5) {
+    if ((resp->status_code_ == 401 || resp->status_code_ == 407) && req->authorization_count_ < 5) {
         auto is_proxy = resp->status_code_ == 407;
         const auto& username = is_proxy ? proxy_digest_auth_username_ : digest_auth_username_;
         const auto& password = is_proxy ? proxy_digest_auth_password_ : digest_auth_password_;
         if (!username.empty() && !password.empty()) {
             std::map<std::string, std::string> auth;
             if (parse_www_authenticate(resp, auth, is_proxy)) {
-                http_request new_req = req;
-                new_req.authorization_count_ += 1;
-                new_req.request_headers_.erase(is_proxy ? "Proxy-Authorization" : "Authorization");
-                new_req.request_headers_.insert(make_digest_authentication_header(
+                auto new_req = std::make_shared<http_request>();
+                *new_req = *req;
+                new_req->authorization_count_ += 1;
+                new_req->request_headers_.erase(is_proxy ? "Proxy-Authorization" : "Authorization");
+                new_req->request_headers_.insert(make_digest_authentication_header(
                     req, auth, new_req.authorization_count_, random_string(10), username, password, is_proxy));
-                http_response new_resp;
+                auto new_resp = std::make_shared<http_response>();
                 res = sync_send_internal(new_req, new_resp, err);
                 if (res) {
                     resp = new_resp;
@@ -127,6 +154,98 @@ int http_client_impl::handle_request(const http_request& req,
     return res;
 }
 
+int http_client_impl::process_request(std::shared_ptr<Stream> stream, std::shared_ptr<http_request> req,
+    std::shared_ptr<http_response> resp, bool close_connection, std::shared_ptr<HttpError> err) {
+    // 发送 http 数据
+    auto http_head_message = req->get_http_request_head_message(close_connection);
+    if (write_request_data_to_stream(stream, http_head_message.data(), http_head_message.size()) < 0) {
+        *err = HttpError::Write;
+        return -1;
+    }
+    auto http_body_message = req->get_http_request_body_message();
+    if (write_request_data_to_stream(stream, http_body_message.data(), http_body_message.size()) < 0) {
+        *err = HttpError::Write;
+        return -2;
+    }
+    // 接收 http 回包数据
+    // 获取 http 回包首行
+    auto resp_line = read_response_line_data_from_stream(stream);
+    if (resp_line.empty()) {
+        *err = HttpError::Read;
+        return -3;
+    }
+    if (resp->set_resp_first_line(resp_line) < 0) {
+        *err = HttpError::Read;
+        return -4;
+    }
+    // 对于状态为 "100 continue" 的回包，直接忽略，直到获取到对用户有意义的回包
+    // 100 Continue 继续。客户端应继续其请求
+    while (resp->get_status_code() == 100) {
+        // CRLF
+        if (read_response_line_data_from_stream(stream).empty()) {
+            *err = HttpError::Read;
+            return -5;
+        }
+        // 响应的下一行
+        resp_line = read_response_line_data_from_stream(stream);
+        if (resp_line.empty()) {
+            *err = HttpError::Read;
+            return -6;
+        }
+        if (resp->set_resp_first_line(resp_line) < 0) {
+            *err = HttpError::Read;
+            return -7;
+        }
+    }
+    // 获取 http 回包头部
+    for (;;) {
+        resp_line = read_response_line_data_from_stream(stream);
+        if (resp_line.empty()) {
+            *err = HttpError::Read;
+            return -8;
+        }
+        // 检查行的末尾是否为 CRLF
+        auto line_size = resp_line.size();
+        if (line_size >= 2 && resp_line[line_size-2] == '\r', resp_line[line_size-1] == '\n') {
+            if (line_size == 2) {
+                break;
+            } else {
+                // 跳过非法的行
+                continue;
+            }
+        }
+        resp->set_header(resp_line);
+    }
+    // 获取 http 回包正文
+    // 204 No Content 无内容。服务器成功处理，但未返回内容。在未更新网页的情况下，可确保浏览器继续显示当前文档
+    // HEAD 类似于 GET 请求，只不过返回的响应中没有具体的内容，用于获取报头
+    // CONNECT HTTP/1.1 协议中预留给能够将连接改为管道方式的代理服务器
+    if ((resp->get_status_code() != 204) && (req->request_method_ != "HEAD") && (req->request_method_ != "CONNECT")) {
+        auto redirect = (resp->get_status_code() > 300) && (resp->get_status_code() < 400) && follow_location_;
+        // TODO req.response_handler
+        // TODO req.progress
+
+    }
+    // 如果对端需要关闭连接
+    if (resp->get_header_value("Connection") == "close"
+        || (resp->get_http_version() == "HTTP/1.0" && resp->get_status_reason() != "Connection established")) {
+        std::lock_guard<std::mutex> guard(socket_mutex_);
+        shutdown_ssl(socket_, true);
+        shutdown_socket(socket_);
+        close_socket(socket_);
+    }
+    return 0;
+}
+
+int http_client_impl::http_redirect(std::shared_ptr<http_request> req,
+    std::shared_ptr<http_response> resp, std::shared_ptr<HttpError> err) {
+    // 检查是否允许重定向
+    if (req->redirect_max_count_ == 0) {
+        *err = HttpError::ExceedRedirectCount;
+        return -1;
+    }
+    auto location = 
+}
 
 // void http_client_impl::makeup_request_header(std::shared_ptr<http_request> req, bool close_connection) {
 //     // 如果需要关闭连接

@@ -118,6 +118,10 @@ public:
     // http 客户端请求答复的回调函数
     http_client_result_cb client_result_cb_ = nullptr;
 
+    size_t authorization_count_ = 0;
+    // 重定向的次数
+    size_t redirect_max_count_ = CPPHTTPLIB_REDIRECT_MAX_COUNT;
+
 
     // size_t redirect_count_ = CPPHTTPLIB_REDIRECT_MAX_COUNT;
     // size_t content_length_ = 0;

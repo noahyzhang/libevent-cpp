@@ -7,10 +7,8 @@ include_directories(
     src
 )
 
-file(GLOB SRCS 
-    src/base/*.cpp
-    src/event/*.cpp
-    src/util/*.cpp
+file(GLOB_RECURSE SRCS
+    src/*.cpp
 )
 
 add_library(event_cpp SHARED ${SRCS})

@@ -255,4 +255,26 @@ bool write_request_data_to_stream(std::shared_ptr<Stream> stream, const char* pt
     return true;
 }
 
+std::string read_response_line_data_from_stream(std::shared_ptr<Stream> stream) {
+    std::string resp_line;
+    for (size_t i = 0; ; i++) {
+        char byte;
+        auto n = stream->read(&byte, 1);
+        if (n < 0) {
+            return "";
+        } else if (n == 0) {
+            if (i == 0) {
+                return "";
+            } else {
+                break;
+            }
+        }
+        resp_line += byte;
+        if (byte == '\n') {
+            break;
+        }
+    }
+    return resp_line;
+}
+
 }  // namespace libevent_cpp
