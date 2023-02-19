@@ -51,7 +51,7 @@ int libevent_cpp::util_network::socket_connect(
             return -1;
         }
     }
-    logger::info("socket_connect success connect to address: %s, port: %d", address, port);
+    logger::info("socket_connect success connect to address: %s, port: %d", address.c_str(), port);
     freeaddrinfo(ai);
     return 0;
 }

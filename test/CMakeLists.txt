@@ -6,7 +6,7 @@ SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
 
 include_directories(
-    src
+    ../include
 )
 
 # 测试 IO_EVENT 事件
@@ -33,15 +33,6 @@ file(GLOB TIME_EVENT_TEST_SRC
 )
 add_executable(time_event_test ${TIME_EVENT_TEST_SRC})
 target_link_libraries(time_event_test
-    event_cpp
-)
-
-# 测试 http_server 功能
-file(GLOB HTTP_SERVER_TEST_SRC
-    sample/http_server_test.cpp
-)
-add_executable(http_server_test ${HTTP_SERVER_TEST_SRC})
-target_link_libraries(http_server_test
     event_cpp
 )
 

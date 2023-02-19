@@ -64,14 +64,26 @@ int libevent_cpp::epoll_base::remove(std::shared_ptr<io_event> event) {
     return 0;
 }
 
+int libevent_cpp::epoll_base::recalc() {
+    recalc_signal_event();
+}
+
 int libevent_cpp::epoll_base::dispatch(struct timeval* tv) {
     logger::debug("epoll_base::dispatch start");
+    // 先释放那些被阻塞的信号事件
+    if (deliver_signal_event() < 0) {
+        return -1;
+    }
     int timeout = -1;
     if (tv) {
         // 将 tv 转换成毫秒，小于 1 毫秒的部分算作 1 毫秒
         timeout = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
     }
     int res = epoll_wait(epoll_fd_, epoll_event_list_, max_events_, timeout);
+    // 在准备处理活跃事件前，先阻塞住已注册的信号事件
+    if (recalc_signal_event() < 0) {
+        return -1;
+    }
     if (res < 0) {
         if (errno != EINTR) {
             logger::error("dispatch of epoll_base failed");
@@ -80,33 +92,35 @@ int libevent_cpp::epoll_base::dispatch(struct timeval* tv) {
         process_signal_event();
         return 0;
     }
-    // epoll_wait 成功的情况下，也处理信号事件
-    if (caught_num_) {
+    // epoll_wait 结束，这期间如果有捕获的信号事件，则执行这个信号事件
+    if (is_caught_signal_) {
         process_signal_event();
     }
     int what = 0;
     for (int i = 0; i < res; ++i) {
         what = epoll_event_list_[i].events;
         if (what & (EPOLLHUP | EPOLLERR)) {
-            what |= (EPOLLHUP | EPOLLERR);
+            what |= (EPOLLIN | EPOLLOUT);
         }
-        auto io_ev = fd_map_io_event_.at(epoll_event_list_[i].data.fd);
+        auto io_ev = io_event_map_.at(epoll_event_list_[i].data.fd);
         if (what && io_ev) {
             // 将要处理此事件，重置其活跃状态
             io_ev->clear_event_active_status();
+            // 可读事件来临，并且此事件为可读的。则设置可读为活跃状态
             if ((what & EPOLLIN) && io_ev->is_event_type_readable()) {
-                // 可读事件来临，并且此事件为可读的。则设置可读为活跃状态
-                if ((what & EPOLLIN) && io_ev->is_event_type_readable()) {
-                    io_ev->enable_read_event_status_active();
+                io_ev->enable_read_event_status_active();
+            }
+            // 可写事件来临，并且此事件为可写的。则设置可写为活跃状态
+            if ((what & EPOLLOUT) && io_ev->is_event_type_writeable()) {
+                io_ev->enable_write_event_status_active();
+            }
+            if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
+                // 如果事件是非持久性的
+                if (!io_ev->is_persistent()) {
+                    remove_event(io_ev);
                 }
-                // 可写事件来临，并且此事件为可写的。则设置可写为活跃状态
-                if ((what & EPOLLOUT) && io_ev->is_event_type_writeable()) {
-                    io_ev->enable_write_event_status_active();
-                }
-                if (io_ev->is_read_event_active_status() || io_ev->is_write_event_active_status()) {
-                    // 将此事件添加到活跃队列中
-                    push_event_active_queue(io_ev, 1);
-                }
+                // 将此事件添加到活跃队列中
+                push_event_active_queue(io_ev, 1);
             }
         }
     }

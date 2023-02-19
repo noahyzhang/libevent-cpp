@@ -6,6 +6,7 @@
 int libevent_cpp::event::internal_event_id_ = 0;
 
 libevent_cpp::event::event() {
+    callback_ = std::make_shared<std::function<void()>>();
     event_id_ = internal_event_id_++;
 }
 

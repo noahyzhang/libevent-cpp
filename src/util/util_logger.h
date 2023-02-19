@@ -3,15 +3,16 @@
 
 #pragma once
 
+#include <stdarg.h>
 #include <string>
 
 namespace libevent_cpp {
 
 typedef enum {
-    LIBEVENT_CPP_LOG_DEBUG_LEVEL = 0,
-    LIBEVENT_CPP_LOG_INFO_LEVEL,
-    LIBEVENT_CPP_LOG_WARN_LEVEL,
-    LIBEVENT_CPP_LOG_ERROR_LEVEL,
+    DEBUG = 0,
+    INFO,
+    WARNING,
+    ERROR,
 } LIBEVENT_CPP_LOG_LEVEL;
 
 #define EV_CHECK_FMT(a, b) __attribute__((format(printf, a, b)))
@@ -19,17 +20,18 @@ typedef enum {
 #define EV_NORETURN __attribute__((noreturn))
 
 class logger {
- private:
+public:
     static void log(LIBEVENT_CPP_LOG_LEVEL log_level, const char* fmt,  va_list ap);
+private:
     static const char* get_log_level_str(LIBEVENT_CPP_LOG_LEVEL log_level) {
         switch (log_level) {
-        case LIBEVENT_CPP_LOG_DEBUG_LEVEL:
+        case DEBUG:
             return "debug";
-        case LIBEVENT_CPP_LOG_INFO_LEVEL:
+        case INFO:
             return "info";
-        case LIBEVENT_CPP_LOG_WARN_LEVEL:
+        case WARNING:
             return "warn";
-        case LIBEVENT_CPP_LOG_ERROR_LEVEL:
+        case ERROR:
             return "error";
         default:
             return "unkown";
