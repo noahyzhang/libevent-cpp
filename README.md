@@ -1,5 +1,5 @@
 # Libevent_cpp
-libevent_cpp 是基于事件的网络库，思考启发来源于 libevent 项目。目标是实现一款高性能网路库。
+libevent_cpp 是基于事件的网络库，思考启发来源于 libevent 项目。目标是实现一款高性能网络库。
 
 项目中正在优化维护中...
 
@@ -19,7 +19,7 @@ libevent_cpp 是基于事件的网络库，思考启发来源于 libevent 项目
 ![](./resource/事件类.jpg)
 
 然后，通过一个例子来说明
-```
+```c++
 void signal_cb() {
     std::cout << "signal call back" << std::endl;
 }
@@ -57,5 +57,3 @@ make -j4
 ```
 
 编译后会生成动态库文件，结合头文件，即可在项目中使用
-
-
